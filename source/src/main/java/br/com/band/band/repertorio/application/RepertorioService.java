@@ -1,6 +1,6 @@
 package br.com.band.band.repertorio.application;
 
-import br.com.band.band.repertorio.application.usecase.ListAllMusicsUseCase;
+import br.com.band.band.repertorio.application.music.usecase.ListAllMusicsUseCase;
 import br.com.band.band.repertorio.domain.music.model.Music;
 
 import java.util.List;

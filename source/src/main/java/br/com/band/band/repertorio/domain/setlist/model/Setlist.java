@@ -1,30 +1,56 @@
 package br.com.band.band.repertorio.domain.setlist.model;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Setlist {
 
     private final UUID id;
     private String name;
-    private LocalDate date;
-    private String notes;
-    private final List<SetlistItem> items;
+    private final List<SetlistItem> items = new ArrayList<>();
 
-    public Setlist(
-            UUID id,
-            String name,
-            LocalDate date,
-            String notes,
-            List<SetlistItem> items
-    ) {
+    public Setlist(UUID id, String name) {
         this.id = id;
         this.name = name;
-        this.date = date;
-        this.notes = notes;
-        this.items = items;
     }
+
+    // ===== Regras de domínio =====
+
+    public void addMusic(UUID musicId) {
+        int nextPosition = items.size() + 1;
+        items.add(new SetlistItem(musicId, nextPosition));
+    }
+
+    public void removeMusic(UUID musicId) {
+        items.removeIf(item -> item.getMusicId().equals(musicId));
+        normalizePositions();
+    }
+
+    public void moveMusic(UUID musicId, int newPosition) {
+        if (newPosition < 1 || newPosition > items.size()) {
+            throw new IllegalArgumentException("Invalid position");
+        }
+
+        SetlistItem item = items.stream()
+                .filter(i -> i.getMusicId().equals(musicId))
+                .findFirst()
+                .orElseThrow();
+
+        items.remove(item);
+        items.add(newPosition - 1, item);
+
+        normalizePositions();
+    }
+
+    private void normalizePositions() {
+        for (int i = 0; i < items.size(); i++) {
+            items.set(i, new SetlistItem(
+                    items.get(i).getMusicId(),
+                    i + 1
+            ));
+        }
+    }
+
+    // ===== Getters =====
 
     public UUID getId() {
         return id;
@@ -34,15 +60,7 @@ public class Setlist {
         return name;
     }
 
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
     public List<SetlistItem> getItems() {
-        return items;
+        return Collections.unmodifiableList(items);
     }
 }

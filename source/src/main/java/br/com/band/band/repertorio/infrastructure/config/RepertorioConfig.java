@@ -1,7 +1,7 @@
 package br.com.band.band.repertorio.infrastructure.config;
 
 import br.com.band.band.repertorio.application.RepertorioService;
-import br.com.band.band.repertorio.application.usecase.ListAllMusicsUseCase;
+import br.com.band.band.repertorio.application.music.usecase.ListAllMusicsUseCase;
 import br.com.band.band.repertorio.domain.music.repository.MusicRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

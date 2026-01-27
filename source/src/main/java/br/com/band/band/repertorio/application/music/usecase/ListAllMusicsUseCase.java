@@ -1,4 +1,4 @@
-package br.com.band.band.repertorio.application.usecase;
+package br.com.band.band.repertorio.application.music.usecase;
 
 import br.com.band.band.repertorio.domain.music.model.Music;
 import br.com.band.band.repertorio.domain.music.repository.MusicRepository;

@@ -5,18 +5,18 @@ import java.util.UUID;
 public class SetlistItem {
 
     private final UUID musicId;
-    private final String musicName;
+    private final int position;
 
-    public SetlistItem(UUID musicId, String musicName) {
+    public SetlistItem(UUID musicId, int position) {
         this.musicId = musicId;
-        this.musicName = musicName;
+        this.position = position;
     }
 
     public UUID getMusicId() {
         return musicId;
     }
 
-    public String getMusicName() {
-        return musicName;
+    public int getPosition() {
+        return position;
     }
 }
