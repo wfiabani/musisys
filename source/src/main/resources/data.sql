@@ -81,3 +81,20 @@ INSERT INTO setlist_items (id, setlist_id, music_id, position) VALUES
 ('bbbbbbbb-0000-0000-0000-000000000024','aaaaaaaa-0000-0000-0000-000000000001','00000024-0000-0000-0000-000000000024',24),
 ('bbbbbbbb-0000-0000-0000-000000000025','aaaaaaaa-0000-0000-0000-000000000001','00000025-0000-0000-0000-000000000025',25),
 ('bbbbbbbb-0000-0000-0000-000000000026','aaaaaaaa-0000-0000-0000-000000000001','00000026-0000-0000-0000-000000000026',26);
+
+
+INSERT INTO events (id, type, date_time, location, notes, setlist_id) VALUES
+('eeeeeeee-0000-0000-0000-000000000001', 'SHOW',     '2025-02-15T21:00:00', 'Teatro Municipal',        'Show principal da temporada', 'aaaaaaaa-0000-0000-0000-000000000001'),
+('eeeeeeee-0000-0000-0000-000000000002', 'SHOW',     '2025-03-01T22:00:00', 'Arena Open Air',          'Evento ao ar livre',          'aaaaaaaa-0000-0000-0000-000000000002'),
+('eeeeeeee-0000-0000-0000-000000000003', 'SHOW',     '2025-03-20T20:30:00', 'Pub Rock Station',        'Show intimista',              NULL),
+
+('eeeeeeee-0000-0000-0000-000000000004', 'REHEARSAL','2025-02-10T19:00:00', 'Estúdio Central',         'Ensaio geral pré-show',       'aaaaaaaa-0000-0000-0000-000000000001'),
+('eeeeeeee-0000-0000-0000-000000000005', 'REHEARSAL','2025-02-12T19:00:00', 'Estúdio Central',         'Ajustes finais',              NULL),
+
+('eeeeeeee-0000-0000-0000-000000000006', 'MEETING',  '2025-02-05T18:00:00', 'Sala de Reuniões',        'Planejamento da turnê',       NULL),
+('eeeeeeee-0000-0000-0000-000000000007', 'MEETING',  '2025-02-18T18:30:00', 'Sala de Reuniões',        'Revisão de repertório',       'aaaaaaaa-0000-0000-0000-000000000009'),
+
+('eeeeeeee-0000-0000-0000-000000000008', 'SHOW',     '2025-04-10T21:30:00', 'Festival Rock Sul',       'Palco secundário',            'aaaaaaaa-0000-0000-0000-000000000003'),
+('eeeeeeee-0000-0000-0000-000000000009', 'SHOW',     '2025-05-01T20:00:00', 'Centro de Eventos',       'Show comemorativo',           'aaaaaaaa-0000-0000-0000-000000000005'),
+
+('eeeeeeee-0000-0000-0000-000000000010', 'REHEARSAL','2025-04-05T20:00:00', 'Estúdio Central',         'Ensaio especial para festival',NULL);
