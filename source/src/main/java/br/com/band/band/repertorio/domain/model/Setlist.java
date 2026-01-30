@@ -1,4 +1,4 @@
-package br.com.band.band.repertorio.domain.setlist.model;
+package br.com.band.band.repertorio.domain.model;
 
 import java.util.*;
 
@@ -12,8 +12,6 @@ public class Setlist {
         this.id = id;
         this.name = name;
     }
-
-    // ===== Regras de domínio =====
 
     public void addMusic(UUID musicId) {
         int nextPosition = items.size() + 1;
@@ -49,8 +47,6 @@ public class Setlist {
             ));
         }
     }
-
-    // ===== Getters =====
 
     public UUID getId() {
         return id;

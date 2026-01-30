@@ -1,8 +1,10 @@
 package br.com.band.band.repertorio.infrastructure.config;
 
 import br.com.band.band.repertorio.application.RepertorioService;
-import br.com.band.band.repertorio.application.music.usecase.ListAllMusicsUseCase;
-import br.com.band.band.repertorio.domain.music.repository.MusicRepository;
+import br.com.band.band.repertorio.application.usecase.GetSetlistWithMusicsUseCase;
+import br.com.band.band.repertorio.application.usecase.ListAllMusicsUseCase;
+import br.com.band.band.repertorio.domain.repository.MusicRepository;
+import br.com.band.band.repertorio.domain.repository.SetlistRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,10 +19,19 @@ public class RepertorioConfig {
     }
 
     @Bean
-    public RepertorioService repertorioService(
-            ListAllMusicsUseCase listAllMusicsUseCase
+    public GetSetlistWithMusicsUseCase getSetlistWithMusicsUseCase(
+            SetlistRepository setlistRepository,
+            MusicRepository musicRepository
     ) {
-        return new RepertorioService(listAllMusicsUseCase);
+        return new GetSetlistWithMusicsUseCase(setlistRepository, musicRepository);
+    }
+
+    @Bean
+    public RepertorioService repertorioService(
+            ListAllMusicsUseCase listAllMusicsUseCase,
+            GetSetlistWithMusicsUseCase getSetlistWithMusicsUseCase
+    ) {
+        return new RepertorioService(listAllMusicsUseCase, getSetlistWithMusicsUseCase);
     }
 
 }

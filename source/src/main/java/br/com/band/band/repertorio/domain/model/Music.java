@@ -1,4 +1,4 @@
-package br.com.band.band.repertorio.domain.music.model;
+package br.com.band.band.repertorio.domain.model;
 
 import java.util.UUID;
 

@@ -1,5 +1,6 @@
 package br.com.band.band.repertorio.infrastructure.persistence.setlist;
 
+import br.com.band.band.repertorio.domain.model.SetlistItem;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -23,7 +24,7 @@ public class SetlistItemEntity {
     protected SetlistItemEntity() {}
 
     public SetlistItemEntity(
-            br.com.band.band.repertorio.domain.setlist.model.SetlistItem item,
+            SetlistItem item,
             SetlistEntity setlist
     ) {
         this.musicId = item.getMusicId();

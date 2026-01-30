@@ -1,4 +1,4 @@
-package br.com.band.band.repertorio.domain.setlist.model;
+package br.com.band.band.repertorio.domain.model;
 
 import java.util.UUID;
 
@@ -19,4 +19,5 @@ public class SetlistItem {
     public int getPosition() {
         return position;
     }
+
 }

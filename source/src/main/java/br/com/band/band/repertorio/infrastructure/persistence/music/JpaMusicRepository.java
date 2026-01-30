@@ -1,10 +1,13 @@
 package br.com.band.band.repertorio.infrastructure.persistence.music;
 
-import br.com.band.band.repertorio.domain.music.model.Music;
-import br.com.band.band.repertorio.domain.music.repository.MusicRepository;
+import br.com.band.band.repertorio.domain.model.Music;
+import br.com.band.band.repertorio.domain.repository.MusicRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class JpaMusicRepository implements MusicRepository {
@@ -29,4 +32,22 @@ public class JpaMusicRepository implements MusicRepository {
                 )
                 .toList();
     }
+
+    @Override
+    public List<Music> findBySetlistId(UUID setlistId) {
+        return repository.findBySetlistId(setlistId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    private Music toDomain(MusicEntity entity) {
+        return new Music(
+                entity.getId(),
+                entity.getTitle(),
+                entity.getMusicalKey(),
+                entity.getAuthor()
+        );
+    }
+
 }
