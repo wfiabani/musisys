@@ -2,9 +2,12 @@ package br.com.band.band.eventos.infrastructure.persistence;
 
 import br.com.band.band.eventos.domain.model.Event;
 import br.com.band.band.eventos.domain.repository.EventRepository;
+import br.com.band.band.eventos.infrastructure.persistence.mapper.EventMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class JpaEventRepository implements EventRepository {
@@ -35,5 +38,11 @@ public class JpaEventRepository implements EventRepository {
                     return event;
                 })
                 .toList();
+    }
+
+    @Override
+    public Optional<Event> findById(UUID id) {
+        return repository.findById(id)
+                .map(EventMapper::toDomain);
     }
 }
