@@ -2,8 +2,6 @@ package br.com.band.band.repertorio.infrastructure.persistence.music;
 
 import br.com.band.band.repertorio.domain.model.Music;
 import br.com.band.band.repertorio.domain.repository.MusicRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

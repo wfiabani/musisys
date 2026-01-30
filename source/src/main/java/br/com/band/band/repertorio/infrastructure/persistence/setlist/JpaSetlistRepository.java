@@ -2,7 +2,6 @@ package br.com.band.band.repertorio.infrastructure.persistence.setlist;
 
 import br.com.band.band.repertorio.domain.model.Setlist;
 import br.com.band.band.repertorio.domain.model.SetlistItem;
-import br.com.band.band.repertorio.domain.repository.MusicRepository;
 import br.com.band.band.repertorio.domain.repository.SetlistRepository;
 import org.springframework.stereotype.Repository;
 
