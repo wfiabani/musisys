@@ -3,10 +3,7 @@ package br.com.band.band.repertorio.infrastructure.web;
 import br.com.band.band.repertorio.application.RepertorioService;
 import br.com.band.band.repertorio.application.dto.SetlistDTO;
 import br.com.band.band.repertorio.domain.model.Music;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +26,11 @@ public class RepertorioController {
     @GetMapping("/setlist/{setlistId}")
     public SetlistDTO getSetlistWithMusics(@PathVariable UUID setlistId) {
         return repertorioService.getSetlistWithMusics(setlistId);
+    }
+
+    @DeleteMapping("/setlists/{setlistId}")
+    public void removeSetlist(@PathVariable UUID setlistId) {
+        repertorioService.removeSetlist(setlistId);
     }
 
 }

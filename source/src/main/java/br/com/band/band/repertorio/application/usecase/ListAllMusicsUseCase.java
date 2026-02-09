@@ -1,7 +1,7 @@
 package br.com.band.band.repertorio.application.usecase;
 
 import br.com.band.band.repertorio.domain.model.Music;
-import br.com.band.band.repertorio.domain.repository.MusicRepository;
+import br.com.band.band.repertorio.application.port.repository.MusicRepository;
 
 import java.util.List;
 

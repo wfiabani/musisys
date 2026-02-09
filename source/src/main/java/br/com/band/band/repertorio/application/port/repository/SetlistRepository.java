@@ -1,4 +1,4 @@
-package br.com.band.band.repertorio.domain.repository;
+package br.com.band.band.repertorio.application.port.repository;
 
 import br.com.band.band.repertorio.domain.model.Setlist;
 
@@ -13,4 +13,6 @@ public interface SetlistRepository {
     Optional<Setlist> findById(UUID id);
 
     void save(Setlist setlist);
+
+    void deleteById(UUID id);
 }

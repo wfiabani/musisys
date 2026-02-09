@@ -1,7 +1,7 @@
 package br.com.band.band.eventos.infrastructure.persistence;
 
 import br.com.band.band.eventos.domain.model.Event;
-import br.com.band.band.eventos.domain.repository.EventRepository;
+import br.com.band.band.eventos.application.port.repository.EventRepository;
 import br.com.band.band.eventos.infrastructure.persistence.mapper.EventMapper;
 import org.springframework.stereotype.Repository;
 

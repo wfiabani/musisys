@@ -4,7 +4,7 @@ import br.com.band.band.eventos.application.EventosService;
 import br.com.band.band.eventos.application.port.SetlistClient;
 import br.com.band.band.eventos.application.usecase.GetEventWithSetlistUseCase;
 import br.com.band.band.eventos.application.usecase.ListAllEventsUseCase;
-import br.com.band.band.eventos.domain.repository.EventRepository;
+import br.com.band.band.eventos.application.port.repository.EventRepository;
 import br.com.band.band.eventos.infrastructure.client.RestSetlistClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

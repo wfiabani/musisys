@@ -2,7 +2,7 @@ package br.com.band.band.repertorio.infrastructure.persistence.setlist;
 
 import br.com.band.band.repertorio.domain.model.Setlist;
 import br.com.band.band.repertorio.domain.model.SetlistItem;
-import br.com.band.band.repertorio.domain.repository.SetlistRepository;
+import br.com.band.band.repertorio.application.port.repository.SetlistRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Comparator;
@@ -66,5 +66,10 @@ public class JpaSetlistRepository implements SetlistRepository {
     @Override
     public void save(Setlist setlist) {
         repository.save(new SetlistEntity(setlist));
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        repository.deleteById(id);
     }
 }

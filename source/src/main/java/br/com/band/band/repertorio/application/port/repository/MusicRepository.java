@@ -1,4 +1,4 @@
-package br.com.band.band.repertorio.domain.repository;
+package br.com.band.band.repertorio.application.port.repository;
 
 import br.com.band.band.repertorio.domain.model.Music;
 

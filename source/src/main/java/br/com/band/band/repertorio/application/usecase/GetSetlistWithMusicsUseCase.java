@@ -3,9 +3,9 @@ package br.com.band.band.repertorio.application.usecase;
 import br.com.band.band.repertorio.application.dto.SetlistDTO;
 import br.com.band.band.repertorio.application.dto.SetlistItemDTO;
 import br.com.band.band.repertorio.domain.model.Music;
-import br.com.band.band.repertorio.domain.repository.MusicRepository;
+import br.com.band.band.repertorio.application.port.repository.MusicRepository;
 import br.com.band.band.repertorio.domain.model.Setlist;
-import br.com.band.band.repertorio.domain.repository.SetlistRepository;
+import br.com.band.band.repertorio.application.port.repository.SetlistRepository;
 
 import java.util.List;
 import java.util.UUID;

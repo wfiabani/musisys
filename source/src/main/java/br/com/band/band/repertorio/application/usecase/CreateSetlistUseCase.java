@@ -1,7 +1,7 @@
 package br.com.band.band.repertorio.application.usecase;
 
 import br.com.band.band.repertorio.domain.model.Setlist;
-import br.com.band.band.repertorio.domain.repository.SetlistRepository;
+import br.com.band.band.repertorio.application.port.repository.SetlistRepository;
 
 import java.util.UUID;
 

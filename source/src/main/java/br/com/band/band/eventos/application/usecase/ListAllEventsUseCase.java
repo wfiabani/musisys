@@ -1,7 +1,7 @@
 package br.com.band.band.eventos.application.usecase;
 
 import br.com.band.band.eventos.domain.model.Event;
-import br.com.band.band.eventos.domain.repository.EventRepository;
+import br.com.band.band.eventos.application.port.repository.EventRepository;
 
 import java.util.List;
 

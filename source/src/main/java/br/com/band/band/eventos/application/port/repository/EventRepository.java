@@ -1,4 +1,4 @@
-package br.com.band.band.eventos.domain.repository;
+package br.com.band.band.eventos.application.port.repository;
 
 import br.com.band.band.eventos.domain.model.Event;
 
