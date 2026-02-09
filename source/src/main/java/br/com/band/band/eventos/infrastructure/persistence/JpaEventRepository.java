@@ -22,21 +22,7 @@ public class JpaEventRepository implements EventRepository {
     public List<Event> findAll() {
         return repository.findAll()
                 .stream()
-                .map(entity -> {
-                    Event event = new Event(
-                            entity.getId(),
-                            entity.getType(),
-                            entity.getDateTime(),
-                            entity.getLocation(),
-                            entity.getNotes()
-                    );
-
-                    if (entity.getSetlistId() != null) {
-                        event.attachSetlist(entity.getSetlistId());
-                    }
-
-                    return event;
-                })
+                .map(EventMapper::toDomain)   // ✅ AQUI ESTÁ A CORREÇÃO
                 .toList();
     }
 
@@ -44,5 +30,24 @@ public class JpaEventRepository implements EventRepository {
     public Optional<Event> findById(UUID id) {
         return repository.findById(id)
                 .map(EventMapper::toDomain);
+    }
+
+    @Override
+    public List<Event> findBySetlistId(UUID id) {
+        return repository.findBySetlistId(id).stream().map(EventMapper::toDomain).toList();
+    }
+
+    @Override
+    public void saveAll(List<Event> events) {
+        List<EventEntity> entities = events.stream()
+                .map(EventMapper::toEntity)
+                .toList();
+
+        repository.saveAll(entities);
+    }
+
+    @Override
+    public void save(Event event) {
+        repository.save(EventMapper.toEntity(event));
     }
 }

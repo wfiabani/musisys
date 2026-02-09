@@ -23,4 +23,15 @@ public class EventMapper {
 
         return event;
     }
+
+    public static EventEntity toEntity(Event event) {
+        return new EventEntity(
+                event.getId(),
+                event.getType(),
+                event.getDateTime(),
+                event.getLocation(),
+                event.getNotes(),
+                event.getSetlistId()
+        );
+    }
 }

@@ -43,10 +43,6 @@ public class Event {
         this.setlistId = Objects.requireNonNull(setlistId);
     }
 
-    public void detachSetlist() {
-        this.setlistId = null;
-    }
-
     public UUID getId() {
         return id;
     }
@@ -71,4 +67,7 @@ public class Event {
         return setlistId;
     }
 
+    public void removeSetlist() {
+        this.setlistId = null;
+    }
 }
