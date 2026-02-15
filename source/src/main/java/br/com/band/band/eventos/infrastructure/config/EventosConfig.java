@@ -22,9 +22,10 @@ public class EventosConfig {
 
     @Bean
     public EventosService eventosService(
-            ListAllEventsUseCase listAllEventsUseCase
+            ListAllEventsUseCase listAllEventsUseCase,
+            GetEventWithSetlistUseCase getEventWithSetlistUseCase
     ) {
-        return new EventosService(listAllEventsUseCase);
+        return new EventosService(listAllEventsUseCase, getEventWithSetlistUseCase);
     }
 
     @Bean
