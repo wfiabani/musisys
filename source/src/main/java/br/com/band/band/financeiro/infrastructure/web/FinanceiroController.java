@@ -29,7 +29,7 @@ public class FinanceiroController {
                         AccountType.PAYABLE,
                         AccountCategory.RECURRING,
                         AccountStatus.PAID,
-                        LocalDate.now().minusDays(5)
+                        LocalDate.now().minusDays(3).minusYears(1)
                 )
         );
     }
