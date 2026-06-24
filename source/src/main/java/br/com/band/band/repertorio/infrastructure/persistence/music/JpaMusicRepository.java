@@ -5,6 +5,7 @@ import br.com.band.band.repertorio.application.port.repository.MusicRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -32,11 +33,31 @@ public class JpaMusicRepository implements MusicRepository {
     }
 
     @Override
+    public Optional<Music> findById(UUID id) {
+        return repository.findById(id).map(this::toDomain);
+    }
+
+    @Override
     public List<Music> findBySetlistId(UUID setlistId) {
         return repository.findBySetlistId(setlistId)
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void save(Music music) {
+        repository.save(new MusicEntity(music.getId(), music.getTitle(), music.getKey(), music.getAuthor()));
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        repository.deleteById(id);
+    }
+
+    @Override
+    public boolean existsInAnySetlist(UUID musicId) {
+        return repository.countSetlistsByMusicId(musicId) > 0;
     }
 
     private Music toDomain(MusicEntity entity) {

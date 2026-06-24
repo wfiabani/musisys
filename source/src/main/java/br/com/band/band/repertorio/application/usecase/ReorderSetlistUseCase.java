@@ -1,5 +1,6 @@
 package br.com.band.band.repertorio.application.usecase;
 
+import br.com.band.band.repertorio.application.exception.SetlistNotFoundException;
 import br.com.band.band.repertorio.domain.model.Setlist;
 import br.com.band.band.repertorio.application.port.repository.SetlistRepository;
 
@@ -14,7 +15,7 @@ public class ReorderSetlistUseCase {
     }
 
     public void execute(UUID setlistId, UUID musicId, int newPosition) {
-        Setlist setlist = setlistRepository.findById(setlistId).orElseThrow(() -> new RuntimeException("Setlist not found"));
+        Setlist setlist = setlistRepository.findById(setlistId).orElseThrow(() -> new SetlistNotFoundException(setlistId));
         setlist.moveMusic(musicId, newPosition);
         setlistRepository.save(setlist);
     }

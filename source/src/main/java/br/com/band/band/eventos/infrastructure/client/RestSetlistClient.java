@@ -23,7 +23,7 @@ public class RestSetlistClient implements SetlistClient {
     @Override
     public Optional<SetlistDto> findById(UUID setlistId) {
         try {
-            String url = repertorioBaseUrl + "/repertorio/setlist/" + setlistId;
+            String url = repertorioBaseUrl + "/repertorio/setlists/" + setlistId;
             SetlistDto response = restTemplate.getForObject(url, SetlistDto.class);
             return Optional.ofNullable(response);
         } catch (Exception e) {

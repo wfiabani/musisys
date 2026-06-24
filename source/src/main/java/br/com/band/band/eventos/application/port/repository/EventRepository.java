@@ -16,4 +16,6 @@ public interface EventRepository {
     void saveAll(List<Event> events);
 
     void save(Event event);
+
+    void deleteById(UUID id);
 }

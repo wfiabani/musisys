@@ -1,9 +1,7 @@
 package br.com.band.band.eventos.application.usecase;
 
 import br.com.band.band.eventos.application.dto.EventDTO;
-import br.com.band.band.eventos.domain.model.Event;
 import br.com.band.band.eventos.application.port.repository.EventRepository;
-import br.com.band.band.repertorio.application.dto.SetlistDTO;
 
 import java.util.List;
 
@@ -16,8 +14,9 @@ public class ListAllEventsUseCase {
     }
 
     public List<EventDTO> execute(){
-        return eventRepository.findAll().stream().map(item -> {
-            return new EventDTO(item.getId(), item.getType(), item.getDateTime(), item.getLocation());
-        }).toList();
+        return eventRepository.findAll().stream()
+                .map(e -> new EventDTO(e.getId(), e.getType(), e.getDateTime(),
+                        e.getLocation(), e.getNotes(), e.getSetlistId()))
+                .toList();
     }
 }

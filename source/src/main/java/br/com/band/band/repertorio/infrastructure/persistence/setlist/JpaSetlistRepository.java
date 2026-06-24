@@ -1,9 +1,9 @@
 package br.com.band.band.repertorio.infrastructure.persistence.setlist;
 
 import br.com.band.band.repertorio.domain.model.Setlist;
-import br.com.band.band.repertorio.domain.model.SetlistItem;
 import br.com.band.band.repertorio.application.port.repository.SetlistRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -14,31 +14,26 @@ import java.util.UUID;
 public class JpaSetlistRepository implements SetlistRepository {
 
     private final SpringDataSetlistRepository repository;
+    private final SpringDataSetlistItemRepository itemRepository;
 
-    public JpaSetlistRepository(SpringDataSetlistRepository repository) {
+    public JpaSetlistRepository(
+            SpringDataSetlistRepository repository,
+            SpringDataSetlistItemRepository itemRepository
+    ) {
         this.repository = repository;
+        this.itemRepository = itemRepository;
     }
 
     @Override
     public List<Setlist> findAll() {
-        return repository.findAll()
+        return repository.findAllWithItems()
                 .stream()
                 .map(entity -> {
-
-                    List<SetlistItem> items = entity.getItems()
-                            .stream()
-                            .map(item ->
-                                    new SetlistItem(
-                                            item.getMusicId(),
-                                            item.getPosition()
-                                    )
-                            )
-                            .toList();
-
-                    return new Setlist(
-                            entity.getId(),
-                            entity.getName()
-                    );
+                    Setlist setlist = new Setlist(entity.getId(), entity.getName());
+                    entity.getItems().stream()
+                            .sorted(Comparator.comparingInt(SetlistItemEntity::getPosition))
+                            .forEach(item -> setlist.addMusic(item.getMusicId()));
+                    return setlist;
                 })
                 .toList();
     }
@@ -47,29 +42,37 @@ public class JpaSetlistRepository implements SetlistRepository {
     public Optional<Setlist> findById(UUID id) {
         return repository.findById(id)
                 .map(entity -> {
-
-                    Setlist setlist = new Setlist(
-                            entity.getId(),
-                            entity.getName()
-                    );
-
+                    Setlist setlist = new Setlist(entity.getId(), entity.getName());
                     entity.getItems().stream()
                             .sorted(Comparator.comparingInt(SetlistItemEntity::getPosition))
-                            .forEach(item ->
-                                    setlist.addMusic(item.getMusicId())
-                            );
-
+                            .forEach(item -> setlist.addMusic(item.getMusicId()));
                     return setlist;
                 });
     }
 
     @Override
+    @Transactional
     public void save(Setlist setlist) {
-        repository.save(new SetlistEntity(setlist));
+        // 1. Upsert the setlist row (id + name)
+        repository.save(new SetlistEntity(setlist.getId(), setlist.getName()));
+
+        // 2. Delete all existing items for this setlist
+        itemRepository.deleteBySetlistId(setlist.getId());
+
+        // 3. Insert updated items
+        if (!setlist.getItems().isEmpty()) {
+            SetlistEntity ref = repository.getReferenceById(setlist.getId());
+            List<SetlistItemEntity> newItems = setlist.getItems().stream()
+                    .map(item -> new SetlistItemEntity(item, ref))
+                    .toList();
+            itemRepository.saveAll(newItems);
+        }
     }
 
     @Override
+    @Transactional
     public void deleteById(UUID id) {
+        itemRepository.deleteBySetlistId(id);
         repository.deleteById(id);
     }
 }

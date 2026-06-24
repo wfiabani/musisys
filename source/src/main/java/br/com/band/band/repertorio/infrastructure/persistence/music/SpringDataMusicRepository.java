@@ -19,4 +19,7 @@ public interface SpringDataMusicRepository
         order by si.position
     """)
     List<MusicEntity> findBySetlistId(@Param("setlistId") UUID setlistId);
+
+    @Query("select count(si) from SetlistItemEntity si where si.musicId = :musicId")
+    long countSetlistsByMusicId(@Param("musicId") UUID musicId);
 }

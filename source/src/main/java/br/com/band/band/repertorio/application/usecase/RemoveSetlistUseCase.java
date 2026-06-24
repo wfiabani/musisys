@@ -1,5 +1,6 @@
 package br.com.band.band.repertorio.application.usecase;
 
+import br.com.band.band.repertorio.application.exception.SetlistNotFoundException;
 import br.com.band.band.repertorio.application.port.DomainEventPublisher;
 import br.com.band.band.repertorio.application.port.repository.SetlistRepository;
 import br.com.band.band.shared.api.events.SetlistRemovedEvent;
@@ -21,7 +22,7 @@ public class RemoveSetlistUseCase {
 
     public void execute(UUID setlistId) {
         repository.findById(setlistId)
-                .orElseThrow(() -> new RuntimeException("Setlist not found"));
+                .orElseThrow(() -> new SetlistNotFoundException(setlistId));
 
         repository.deleteById(setlistId);
 

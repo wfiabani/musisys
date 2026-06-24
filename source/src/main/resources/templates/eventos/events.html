@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{eventos/_layout :: head}"></head>
+<body class="bg-gray-50 antialiased" x-data="eventManager()">
+
+<div th:replace="~{eventos/_layout :: toastWidget}"></div>
+
+<script th:inline="javascript">
+    window.__events = /*[[${events}]]*/ [];
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<main class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Cabeçalho -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Eventos</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Shows, ensaios e reuniões do grupo</p>
+        </div>
+        <button @click="openCreate()"
+                class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700
+                       text-white text-sm font-medium px-4 py-2.5 rounded-lg
+                       shadow-sm transition-colors focus:outline-none focus:ring-2
+                       focus:ring-brand-500 focus:ring-offset-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Novo Evento
+        </button>
+    </div>
+
+    <!-- Filtros de tipo + busca -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+
+        <!-- Chips de tipo -->
+        <div class="flex gap-1.5 flex-wrap items-center">
+            <button @click="typeFilter = ''"
+                    :class="typeFilter === ''
+                        ? 'bg-gray-800 text-white border-gray-800'
+                        : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'"
+                    class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors">
+                Todos
+            </button>
+            <template x-for="[key, label] in Object.entries(typeLabels)" :key="key">
+                <button @click="typeFilter = (typeFilter === key ? '' : key)"
+                        :class="typeFilter === key
+                            ? typeBadgeClass(key)
+                            : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200'"
+                        class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+                        x-text="label">
+                </button>
+            </template>
+        </div>
+
+        <!-- Busca -->
+        <div class="relative flex-1 min-w-48 sm:ml-auto sm:max-w-xs">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+            </svg>
+            <input x-model="search" type="text" placeholder="Buscar por local ou notas…"
+                   class="w-full pl-10 pr-8 py-2.5 text-sm bg-white border border-gray-200
+                          rounded-lg shadow-sm placeholder-gray-400 focus:outline-none
+                          focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"/>
+            <button x-show="search" @click="search = ''"
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Lista de eventos -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+        <!-- Estado vazio -->
+        <div x-show="filteredEvents.length === 0"
+             class="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+            <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2
+                         0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p x-show="search || typeFilter" class="text-sm">Nenhum evento encontrado para o filtro aplicado.</p>
+            <p x-show="!search && !typeFilter" class="text-sm">Nenhum evento cadastrado ainda.</p>
+            <button x-show="!search && !typeFilter" @click="openCreate()"
+                    class="text-sm text-brand-600 hover:underline font-medium">
+                Criar o primeiro evento
+            </button>
+        </div>
+
+        <!-- Tabela -->
+        <table x-show="filteredEvents.length > 0" class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold
+                           text-gray-500 uppercase tracking-wide">
+                    <th class="pl-5 pr-3 py-3 text-left w-28">Tipo</th>
+                    <th class="px-3 py-3 text-left w-48">Data / Hora</th>
+                    <th class="px-3 py-3 text-left">Local</th>
+                    <th class="px-3 py-3 text-left hidden md:table-cell">Notas</th>
+                    <th class="px-4 py-3 text-right w-32">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="event in filteredEvents" :key="event.id">
+                    <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50/70
+                               transition-colors group border-l-[3px]"
+                        :class="typeRowClass(event.type)">
+
+                        <!-- Tipo -->
+                        <td class="pl-5 pr-3 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs
+                                         font-semibold border whitespace-nowrap"
+                                  :class="typeBadgeClass(event.type)"
+                                  x-text="typeLabels[event.type] || event.type">
+                            </span>
+                        </td>
+
+                        <!-- Data / hora -->
+                        <td class="px-3 py-3 text-gray-700 tabular-nums whitespace-nowrap">
+                            <span class="font-medium" x-text="fmtDate(event.dateTime)"></span>
+                        </td>
+
+                        <!-- Local -->
+                        <td class="px-3 py-3">
+                            <p class="font-medium text-gray-900 truncate max-w-xs"
+                               x-text="event.location"></p>
+                        </td>
+
+                        <!-- Notas (oculto em mobile) -->
+                        <td class="px-3 py-3 hidden md:table-cell">
+                            <p class="text-gray-400 text-xs italic truncate max-w-xs"
+                               x-text="event.notes || '—'"></p>
+                        </td>
+
+                        <!-- Ações -->
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-0.5
+                                        opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                <!-- Ver detalhes -->
+                                <a :href="`/eventos/ui/${event.id}`" title="Ver detalhes"
+                                   class="p-1.5 rounded-md text-gray-400 hover:text-brand-600
+                                          hover:bg-brand-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943
+                                                 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </a>
+
+                                <!-- Editar -->
+                                <button @click="openEdit(event)" title="Editar"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-brand-600
+                                               hover:bg-brand-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                                                 m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Excluir -->
+                                <button @click="openDelete(event)" title="Excluir"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-red-600
+                                               hover:bg-red-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+                                                 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0
+                                                 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+
+        <!-- Rodapé contador -->
+        <div x-show="events.length > 0"
+             class="px-5 py-2.5 bg-gray-50 border-t border-gray-100 text-xs text-gray-400">
+            <span x-text="`${filteredEvents.length} de ${events.length} evento${events.length !== 1 ? 's' : ''}`"></span>
+        </div>
+    </div>
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Modal — Criar / Editar                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div x-cloak x-show="modal.open"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-40 flex items-center justify-center p-4"
+     @keydown.escape.window="closeModal()">
+
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal()"></div>
+
+    <div x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+         class="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-md">
+
+        <!-- Cabeçalho do modal -->
+        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900"
+                    x-text="modal.mode === 'create' ? 'Novo Evento' : 'Editar Evento'"></h2>
+                <p class="text-xs text-gray-400 mt-0.5"
+                   x-text="modal.mode === 'create' ? 'Preencha os dados do evento' : 'Atualize as informações do evento'">
+                </p>
+            </div>
+            <button @click="closeModal()"
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600
+                           hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Formulário -->
+        <form @submit.prevent="save()" class="px-6 py-5 space-y-4" novalidate>
+
+            <!-- Tipo + Data lado a lado -->
+            <div class="grid grid-cols-2 gap-3">
+
+                <!-- Tipo -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Tipo <span class="text-red-500">*</span>
+                    </label>
+                    <select x-model="form.type"
+                            @change="errors.type = ''"
+                            :class="errors.type
+                                ? 'border-red-400 focus:ring-red-400'
+                                : 'border-gray-200 focus:ring-brand-500'"
+                            class="w-full px-3 py-2.5 text-sm border rounded-lg shadow-sm bg-white
+                                   focus:outline-none focus:ring-2 focus:border-transparent
+                                   transition appearance-none cursor-pointer">
+                        <option value="SHOW">Show</option>
+                        <option value="REHEARSAL">Ensaio</option>
+                        <option value="MEETING">Reunião</option>
+                        <option value="OTHER">Outro</option>
+                    </select>
+                    <p x-show="errors.type" x-text="errors.type"
+                       class="mt-1 text-xs text-red-500"></p>
+                </div>
+
+                <!-- Data e hora -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Data e hora <span class="text-red-500">*</span>
+                    </label>
+                    <input x-model="form.dateTime"
+                           @change="errors.dateTime = ''"
+                           type="datetime-local"
+                           :class="errors.dateTime
+                               ? 'border-red-400 focus:ring-red-400'
+                               : 'border-gray-200 focus:ring-brand-500'"
+                           class="w-full px-3 py-2.5 text-sm border rounded-lg shadow-sm
+                                  focus:outline-none focus:ring-2 focus:border-transparent transition"/>
+                    <p x-show="errors.dateTime" x-text="errors.dateTime"
+                       class="mt-1 text-xs text-red-500"></p>
+                </div>
+            </div>
+
+            <!-- Local -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Local <span class="text-red-500">*</span>
+                </label>
+                <input x-model.trim="form.location"
+                       @input="errors.location = ''"
+                       x-ref="locationInput"
+                       type="text"
+                       placeholder="Ex: Teatro Municipal, Studio A, Sala de reunião…"
+                       :class="errors.location
+                           ? 'border-red-400 focus:ring-red-400'
+                           : 'border-gray-200 focus:ring-brand-500'"
+                       class="w-full px-3.5 py-2.5 text-sm border rounded-lg shadow-sm
+                              focus:outline-none focus:ring-2 focus:border-transparent
+                              placeholder-gray-300 transition"/>
+                <p x-show="errors.location" x-text="errors.location"
+                   class="mt-1 text-xs text-red-500"></p>
+            </div>
+
+            <!-- Notas -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Notas
+                    <span class="text-xs text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <textarea x-model="form.notes"
+                          rows="2"
+                          placeholder="Observações, instruções ou detalhes do evento…"
+                          class="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-lg
+                                 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500
+                                 focus:border-transparent placeholder-gray-300
+                                 transition resize-none"></textarea>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex gap-3 pt-1">
+                <button type="button" @click="closeModal()"
+                        class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700
+                               bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" :disabled="saving"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5
+                               text-sm font-medium text-white bg-brand-600 hover:bg-brand-700
+                               disabled:opacity-60 disabled:cursor-not-allowed rounded-lg
+                               transition-colors focus:outline-none focus:ring-2
+                               focus:ring-brand-500 focus:ring-offset-2">
+                    <svg x-show="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <span x-text="saving ? 'Salvando…' : (modal.mode === 'create' ? 'Criar Evento' : 'Salvar')"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Dialog — Confirmar exclusão                                          -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div x-cloak x-show="deleteDialog.open"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-40 flex items-center justify-center p-4"
+     @keydown.escape.window="closeDelete()">
+
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeDelete()"></div>
+
+    <div x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         class="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+
+        <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-50">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7
+                         m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+        </div>
+
+        <h3 class="text-center text-base font-semibold text-gray-900 mb-1">Excluir evento</h3>
+        <p class="text-center text-sm text-gray-500 mb-1">Tem certeza que deseja excluir o evento em</p>
+        <p class="text-center font-semibold text-gray-800 mb-5"
+           x-text="`&quot;${deleteDialog.event?.location}&quot;`"></p>
+        <p class="text-center text-xs text-gray-400 mb-5">Esta ação não pode ser desfeita.</p>
+
+        <div class="flex gap-3">
+            <button @click="closeDelete()"
+                    class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700
+                           bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                Cancelar
+            </button>
+            <button @click="executeDelete()" :disabled="deleting"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5
+                           text-sm font-medium text-white bg-red-600 hover:bg-red-700
+                           disabled:opacity-60 disabled:cursor-not-allowed rounded-lg
+                           transition-colors">
+                <svg x-show="deleting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                            stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span x-text="deleting ? 'Excluindo…' : 'Sim, excluir'"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<th:block th:replace="~{eventos/_layout :: scripts}"></th:block>
+<script>
+/* Normaliza LocalDateTime que pode vir como array [y,mo,d,h,mi,s] ou string ISO */
+function normalizeDt(dt) {
+    if (!dt) return ''
+    if (Array.isArray(dt)) {
+        const [y, mo, d, h = 0, mi = 0, s = 0] = dt
+        const pad = n => String(n).padStart(2, '0')
+        return `${y}-${pad(mo)}-${pad(d)}T${pad(h)}:${pad(mi)}:${pad(s)}`
+    }
+    return String(dt)
+}
+
+function eventManager() {
+    return {
+
+        /* ── Estado ────────────────────────────────────────────────── */
+        events: (window.__events || []).map(e => ({ ...e, dateTime: normalizeDt(e.dateTime) })),
+        search:     '',
+        typeFilter: '',
+        saving:     false,
+        deleting:   false,
+
+        modal:        { open: false, mode: 'create', event: null },
+        form:         { type: 'SHOW', dateTime: '', location: '', notes: '', setlistId: '' },
+        errors:       { type: '', dateTime: '', location: '' },
+        deleteDialog: { open: false, event: null },
+
+        /* ── Constantes de tipo ────────────────────────────────────── */
+        typeLabels: {
+            SHOW:      'Show',
+            REHEARSAL: 'Ensaio',
+            MEETING:   'Reunião',
+            OTHER:     'Outro'
+        },
+
+        typeBadgeClass(type) {
+            return ({
+                SHOW:      'bg-emerald-100 text-emerald-700 border-emerald-200',
+                REHEARSAL: 'bg-blue-100 text-blue-700 border-blue-200',
+                MEETING:   'bg-purple-100 text-purple-700 border-purple-200',
+                OTHER:     'bg-gray-100 text-gray-600 border-gray-200'
+            })[type] || 'bg-gray-100 text-gray-600 border-gray-200'
+        },
+
+        typeRowClass(type) {
+            return ({
+                SHOW:      'border-l-emerald-400',
+                REHEARSAL: 'border-l-blue-400',
+                MEETING:   'border-l-purple-400',
+                OTHER:     'border-l-gray-300'
+            })[type] || 'border-l-gray-300'
+        },
+
+        /* ── Computed ──────────────────────────────────────────────── */
+        get filteredEvents() {
+            const q = this.search.toLowerCase().trim()
+            return [...this.events]
+                .filter(e => {
+                    if (this.typeFilter && e.type !== this.typeFilter) return false
+                    if (!q) return true
+                    return e.location.toLowerCase().includes(q) ||
+                           (this.typeLabels[e.type] || '').toLowerCase().includes(q) ||
+                           (e.notes || '').toLowerCase().includes(q)
+                })
+                .sort((a, b) => b.dateTime.localeCompare(a.dateTime))
+        },
+
+        /* ── Abrir modal ───────────────────────────────────────────── */
+        openCreate() {
+            this.form   = { type: 'SHOW', dateTime: '', location: '', notes: '', setlistId: '' }
+            this.errors = { type: '', dateTime: '', location: '' }
+            this.modal  = { open: true, mode: 'create', event: null }
+            this.$nextTick(() => this.$refs.locationInput?.focus())
+        },
+
+        openEdit(event) {
+            this.form = {
+                type:      event.type,
+                dateTime:  toInputDt(event.dateTime),
+                location:  event.location,
+                notes:     event.notes || '',
+                setlistId: event.setlistId || ''
+            }
+            this.errors = { type: '', dateTime: '', location: '' }
+            this.modal  = { open: true, mode: 'edit', event }
+            this.$nextTick(() => this.$refs.locationInput?.focus())
+        },
+
+        closeModal() {
+            this.modal.open = false
+            this.saving = false
+        },
+
+        /* ── Validação ─────────────────────────────────────────────── */
+        validate() {
+            this.errors = { type: '', dateTime: '', location: '' }
+            let ok = true
+            if (!this.form.type)            { this.errors.type     = 'Selecione o tipo.';      ok = false }
+            if (!this.form.dateTime)        { this.errors.dateTime = 'Informe a data e hora.'; ok = false }
+            if (!this.form.location.trim()) { this.errors.location = 'Informe o local.';       ok = false }
+            return ok
+        },
+
+        buildPayload() {
+            return {
+                type:      this.form.type,
+                dateTime:  this.form.dateTime,
+                location:  this.form.location.trim(),
+                notes:     this.form.notes.trim() || null,
+                setlistId: this.form.setlistId.trim() || null
+            }
+        },
+
+        /* ── Salvar (criar / atualizar) ────────────────────────────── */
+        async save() {
+            if (!this.validate()) return
+            this.saving = true
+            try {
+                const payload = this.buildPayload()
+
+                if (this.modal.mode === 'create') {
+                    const res = await fetch('/eventos', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify(payload)
+                    })
+                    if (!res.ok) throw new Error(await readError(res))
+                    const id = await res.json()
+                    this.events.push({
+                        id,
+                        type:      payload.type,
+                        dateTime:  this.form.dateTime + ':00',
+                        location:  payload.location,
+                        notes:     payload.notes,
+                        setlistId: payload.setlistId
+                    })
+                    this.closeModal()
+                    this.$store.toast.success('Evento criado com sucesso!')
+
+                } else {
+                    const res = await fetch(`/eventos/${this.modal.event.id}`, {
+                        method:  'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify(payload)
+                    })
+                    if (!res.ok) throw new Error(await readError(res))
+                    const idx = this.events.findIndex(e => e.id === this.modal.event.id)
+                    if (idx >= 0) {
+                        this.events[idx] = {
+                            ...this.events[idx],
+                            type:      payload.type,
+                            dateTime:  this.form.dateTime + ':00',
+                            location:  payload.location,
+                            notes:     payload.notes,
+                            setlistId: payload.setlistId
+                        }
+                    }
+                    this.closeModal()
+                    this.$store.toast.success('Evento atualizado!')
+                }
+
+            } catch (err) {
+                this.$store.toast.error(err.message || 'Erro ao salvar o evento.')
+            } finally {
+                this.saving = false
+            }
+        },
+
+        /* ── Excluir ───────────────────────────────────────────────── */
+        openDelete(event) {
+            this.deleteDialog = { open: true, event }
+        },
+
+        closeDelete() {
+            this.deleteDialog.open = false
+            this.deleting = false
+        },
+
+        async executeDelete() {
+            this.deleting = true
+            try {
+                const res = await fetch(`/eventos/${this.deleteDialog.event.id}`, { method: 'DELETE' })
+                if (!res.ok) throw new Error(await readError(res))
+                this.events = this.events.filter(e => e.id !== this.deleteDialog.event.id)
+                this.closeDelete()
+                this.$store.toast.success('Evento excluído.')
+            } catch (err) {
+                this.$store.toast.error(err.message || 'Erro ao excluir o evento.')
+                this.closeDelete()
+            } finally {
+                this.deleting = false
+            }
+        }
+    }
+}
+</script>
+
+</body>
+</html>

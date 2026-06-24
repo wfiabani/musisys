@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{repertorio/_layout :: head}"></head>
+<body class="bg-gray-50 antialiased" x-data="musicManager()">
+
+<!-- Toast global -->
+<div th:replace="~{repertorio/_layout :: toastWidget}"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Dados iniciais injetados pelo Thymeleaf                              -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<script th:inline="javascript">
+    window.__musics = /*[[${musics}]]*/ [];
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Página                                                                -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<main class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Cabeçalho -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Músicas</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Gerencie as músicas do repertório</p>
+        </div>
+        <button @click="openCreate()"
+                class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700
+                       text-white text-sm font-medium px-4 py-2.5 rounded-lg
+                       shadow-sm transition-colors focus:outline-none focus:ring-2
+                       focus:ring-brand-500 focus:ring-offset-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Nova Música
+        </button>
+    </div>
+
+    <!-- Barra de busca -->
+    <div class="relative mb-4">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <input x-model="search"
+               type="text"
+               placeholder="Buscar por título, artista ou tom…"
+               class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200
+                      rounded-lg shadow-sm placeholder-gray-400 focus:outline-none
+                      focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"/>
+        <button x-show="search" @click="search = ''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold
+                           text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3 text-left w-10">#</th>
+                    <th class="px-4 py-3 text-left">Título</th>
+                    <th class="px-4 py-3 text-left">Artista</th>
+                    <th class="px-4 py-3 text-center w-16">Tom</th>
+                    <th class="px-4 py-3 text-right w-28">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Linhas das músicas -->
+                <template x-for="(music, index) in filteredMusics" :key="music.id">
+                    <tr class="border-b border-gray-100 last:border-0
+                               hover:bg-brand-50 transition-colors group">
+                        <td class="px-4 py-3 text-gray-400 tabular-nums"
+                            x-text="index + 1"></td>
+                        <td class="px-4 py-3">
+                            <span class="font-medium text-gray-900" x-text="music.title"></span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600" x-text="music.author"></td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-block px-2 py-0.5 rounded-md text-xs font-semibold
+                                         bg-indigo-50 text-indigo-700 border border-indigo-100"
+                                  x-text="music.key"></span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-1
+                                        opacity-0 group-hover:opacity-100 transition-opacity">
+                                <!-- Editar -->
+                                <button @click="openEdit(music)"
+                                        title="Editar"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-brand-600
+                                               hover:bg-brand-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                                                 m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+                                <!-- Excluir -->
+                                <button @click="openDelete(music)"
+                                        title="Excluir"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-red-600
+                                               hover:bg-red-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+                                                 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0
+                                                 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+
+                <!-- Estado vazio -->
+                <tr x-show="filteredMusics.length === 0">
+                    <td colspan="5" class="px-4 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3 text-gray-400">
+                            <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2
+                                         2s-3-.895-3-2s1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343
+                                         2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                            </svg>
+                            <p x-show="search" class="text-sm">
+                                Nenhuma música encontrada para "<span class="font-medium" x-text="search"></span>"
+                            </p>
+                            <p x-show="!search" class="text-sm">
+                                Nenhuma música cadastrada ainda.
+                            </p>
+                            <button x-show="!search" @click="openCreate()"
+                                    class="text-sm text-brand-600 hover:underline font-medium">
+                                Adicionar a primeira música
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Rodapé da tabela -->
+        <div x-show="musics.length > 0"
+             class="px-4 py-2.5 bg-gray-50 border-t border-gray-100 text-xs text-gray-400 flex justify-between">
+            <span x-text="`${filteredMusics.length} de ${musics.length} músicas`"></span>
+            <span x-show="search" x-text="`Filtrando por '${search}'`"></span>
+        </div>
+    </div>
+</main>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Modal — Criar / Editar Música                                        -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div x-cloak
+     x-show="modal.open"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-40 flex items-center justify-center p-4"
+     @keydown.escape.window="closeModal()">
+
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal()"></div>
+
+    <!-- Painel -->
+    <div x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-md">
+
+        <!-- Cabeçalho do modal -->
+        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900"
+                    x-text="modal.mode === 'create' ? 'Nova Música' : 'Editar Música'"></h2>
+                <p class="text-xs text-gray-400 mt-0.5"
+                   x-text="modal.mode === 'create'
+                       ? 'Preencha os dados da nova música'
+                       : 'Atualize as informações da música'"></p>
+            </div>
+            <button @click="closeModal()"
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Formulário -->
+        <form @submit.prevent="save()" class="px-6 py-5 space-y-4" novalidate>
+
+            <!-- Título -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Título <span class="text-red-500">*</span>
+                </label>
+                <input x-model.trim="form.title"
+                       @input="errors.title = ''"
+                       type="text"
+                       placeholder="Ex: Smells Like Teen Spirit"
+                       :class="errors.title
+                           ? 'border-red-400 focus:ring-red-400'
+                           : 'border-gray-200 focus:ring-brand-500'"
+                       class="w-full px-3.5 py-2.5 text-sm border rounded-lg shadow-sm
+                              focus:outline-none focus:ring-2 focus:border-transparent
+                              placeholder-gray-300 transition"/>
+                <p x-show="errors.title" x-text="errors.title"
+                   class="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                </p>
+            </div>
+
+            <!-- Artista -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Artista <span class="text-red-500">*</span>
+                </label>
+                <input x-model.trim="form.author"
+                       @input="errors.author = ''"
+                       type="text"
+                       placeholder="Ex: Nirvana"
+                       :class="errors.author
+                           ? 'border-red-400 focus:ring-red-400'
+                           : 'border-gray-200 focus:ring-brand-500'"
+                       class="w-full px-3.5 py-2.5 text-sm border rounded-lg shadow-sm
+                              focus:outline-none focus:ring-2 focus:border-transparent
+                              placeholder-gray-300 transition"/>
+                <p x-show="errors.author" x-text="errors.author"
+                   class="mt-1.5 text-xs text-red-500"></p>
+            </div>
+
+            <!-- Tom -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Tom <span class="text-red-500">*</span>
+                </label>
+                <select x-model="form.key"
+                        @change="errors.key = ''"
+                        :class="errors.key
+                            ? 'border-red-400 focus:ring-red-400'
+                            : 'border-gray-200 focus:ring-brand-500'"
+                        class="w-full px-3.5 py-2.5 text-sm border rounded-lg shadow-sm
+                               focus:outline-none focus:ring-2 focus:border-transparent
+                               bg-white transition appearance-none cursor-pointer">
+                    <option value="" disabled>Selecione o tom…</option>
+                    <template x-for="note in musicalKeys" :key="note">
+                        <option :value="note" x-text="note"></option>
+                    </template>
+                </select>
+                <p x-show="errors.key" x-text="errors.key"
+                   class="mt-1.5 text-xs text-red-500"></p>
+            </div>
+
+            <!-- Rodapé do form -->
+            <div class="flex gap-3 pt-2">
+                <button type="button" @click="closeModal()"
+                        class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700
+                               bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        :disabled="saving"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5
+                               text-sm font-medium text-white bg-brand-600 hover:bg-brand-700
+                               disabled:opacity-60 disabled:cursor-not-allowed rounded-lg
+                               transition-colors focus:outline-none focus:ring-2
+                               focus:ring-brand-500 focus:ring-offset-2">
+                    <svg x-show="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <span x-text="saving ? 'Salvando…' : (modal.mode === 'create' ? 'Adicionar' : 'Salvar')"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Dialog — Confirmação de exclusão                                     -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div x-cloak
+     x-show="deleteDialog.open"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-40 flex items-center justify-center p-4"
+     @keydown.escape.window="closeDelete()">
+
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeDelete()"></div>
+
+    <div x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         class="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+
+        <!-- Ícone de alerta -->
+        <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4
+                    rounded-full bg-red-50">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94
+                         a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+        </div>
+
+        <h3 class="text-center text-base font-semibold text-gray-900 mb-1">Excluir música</h3>
+        <p class="text-center text-sm text-gray-500 mb-5">
+            Tem certeza que deseja excluir
+            <strong class="text-gray-800" x-text="`"${deleteDialog.music?.title}"`"></strong>?
+            Esta ação não pode ser desfeita.
+        </p>
+
+        <!-- Mensagem de erro (409 — música em uso) -->
+        <div x-show="deleteDialog.errorMsg"
+             x-transition
+             class="mb-4 p-3.5 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+            <div class="flex gap-2.5">
+                <svg class="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <p class="font-medium text-amber-800">Não foi possível excluir</p>
+                    <p class="text-amber-700 mt-0.5" x-text="deleteDialog.errorMsg"></p>
+                    <a href="/repertorio/ui/setlists"
+                       class="inline-block mt-2 text-xs font-medium text-amber-800
+                              underline underline-offset-2 hover:text-amber-900">
+                        Ir para Setlists →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="flex gap-3">
+            <button @click="closeDelete()"
+                    class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700
+                           bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                Cancelar
+            </button>
+            <button @click="executeDelete()"
+                    :disabled="deleting"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5
+                           text-sm font-medium text-white bg-red-600 hover:bg-red-700
+                           disabled:opacity-60 disabled:cursor-not-allowed rounded-lg
+                           transition-colors">
+                <svg x-show="deleting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span x-text="deleting ? 'Excluindo…' : 'Sim, excluir'"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Scripts                                                              -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<th:block th:replace="~{repertorio/_layout :: scripts}"></th:block>
+
+<script>
+function musicManager() {
+    return {
+
+        /* ── Estado principal ──────────────────────────────────────────── */
+        musics:      window.__musics || [],
+        search:      '',
+        saving:      false,
+        deleting:    false,
+
+        musicalKeys: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
+
+        modal: {
+            open: false,
+            mode: 'create',   // 'create' | 'edit'
+            id:   null
+        },
+
+        form:   { title: '', author: '', key: '' },
+        errors: { title: '', author: '', key: '' },
+
+        deleteDialog: {
+            open:     false,
+            music:    null,
+            errorMsg: ''
+        },
+
+        /* ── Computed ──────────────────────────────────────────────────── */
+        get filteredMusics() {
+            const q = this.search.toLowerCase().trim()
+            if (!q) return this.musics
+            return this.musics.filter(m =>
+                m.title.toLowerCase().includes(q)  ||
+                m.author.toLowerCase().includes(q) ||
+                m.key.toLowerCase().includes(q)
+            )
+        },
+
+        /* ── Modal create/edit ─────────────────────────────────────────── */
+        openCreate() {
+            this.form   = { title: '', author: '', key: '' }
+            this.errors = { title: '', author: '', key: '' }
+            this.modal  = { open: true, mode: 'create', id: null }
+        },
+
+        openEdit(music) {
+            this.form   = { title: music.title, author: music.author, key: music.key }
+            this.errors = { title: '', author: '', key: '' }
+            this.modal  = { open: true, mode: 'edit', id: music.id }
+        },
+
+        closeModal() {
+            this.modal.open = false
+            this.saving     = false
+        },
+
+        validate() {
+            this.errors = { title: '', author: '', key: '' }
+            if (!this.form.title)  this.errors.title  = 'Informe o título da música.'
+            if (!this.form.author) this.errors.author = 'Informe o nome do artista.'
+            if (!this.form.key)    this.errors.key    = 'Selecione o tom.'
+            return !Object.values(this.errors).some(Boolean)
+        },
+
+        async save() {
+            if (!this.validate()) return
+            this.saving = true
+            try {
+                if (this.modal.mode === 'create') {
+                    await this._createMusic()
+                } else {
+                    await this._updateMusic()
+                }
+                this.closeModal()
+            } catch (err) {
+                this.$store.toast.error(err.message || 'Erro ao salvar a música.')
+            } finally {
+                this.saving = false
+            }
+        },
+
+        async _createMusic() {
+            const res = await fetch('/repertorio/musics', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(this.form)
+            })
+            if (!res.ok) throw new Error(await readError(res))
+            const id = await res.json()
+            this.musics.push({ id, ...this.form })
+            this.$store.toast.success(`"${this.form.title}" adicionada com sucesso!`)
+        },
+
+        async _updateMusic() {
+            const res = await fetch(`/repertorio/musics/${this.modal.id}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(this.form)
+            })
+            if (!res.ok) throw new Error(await readError(res))
+            const idx = this.musics.findIndex(m => m.id === this.modal.id)
+            if (idx !== -1) this.musics[idx] = { id: this.modal.id, ...this.form }
+            this.$store.toast.success(`"${this.form.title}" atualizada com sucesso!`)
+        },
+
+        /* ── Dialog de exclusão ────────────────────────────────────────── */
+        openDelete(music) {
+            this.deleteDialog = { open: true, music, errorMsg: '' }
+        },
+
+        closeDelete() {
+            this.deleteDialog.open     = false
+            this.deleteDialog.errorMsg = ''
+            this.deleting              = false
+        },
+
+        async executeDelete() {
+            this.deleting = true
+            this.deleteDialog.errorMsg = ''
+            try {
+                const res = await fetch(`/repertorio/musics/${this.deleteDialog.music.id}`, {
+                    method: 'DELETE'
+                })
+
+                if (res.status === 409) {
+                    this.deleteDialog.errorMsg =
+                        'Esta música está associada a um ou mais Setlists e não pode ser excluída. ' +
+                        'Remova-a dos Setlists antes de continuar.'
+                    return
+                }
+
+                if (!res.ok) throw new Error(await readError(res))
+
+                this.musics = this.musics.filter(m => m.id !== this.deleteDialog.music.id)
+                this.$store.toast.success(`"${this.deleteDialog.music.title}" excluída com sucesso!`)
+                this.closeDelete()
+
+            } catch (err) {
+                this.$store.toast.error(err.message || 'Erro ao excluir a música.')
+                this.closeDelete()
+            } finally {
+                this.deleting = false
+            }
+        }
+    }
+}
+</script>
+
+</body>
+</html>

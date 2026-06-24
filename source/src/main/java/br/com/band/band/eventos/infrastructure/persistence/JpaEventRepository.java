@@ -50,4 +50,9 @@ public class JpaEventRepository implements EventRepository {
     public void save(Event event) {
         repository.save(EventMapper.toEntity(event));
     }
+
+    @Override
+    public void deleteById(UUID id) {
+        repository.deleteById(id);
+    }
 }

@@ -27,6 +27,10 @@ public class Event {
         this.notes = notes;
     }
 
+    public void changeType(EventType newType) {
+        this.type = Objects.requireNonNull(newType);
+    }
+
     public void changeDateTime(LocalDateTime newDateTime) {
         this.dateTime = Objects.requireNonNull(newDateTime);
     }

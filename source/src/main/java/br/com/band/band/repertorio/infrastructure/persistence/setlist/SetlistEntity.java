@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Collections;
 
 @Entity
 @Table(name = "setlists")
@@ -15,22 +16,19 @@ public class SetlistEntity {
 
     private String name;
 
-    @OneToMany(
-            mappedBy = "setlist",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "setlist")
     private List<SetlistItemEntity> items;
 
     protected SetlistEntity() {}
 
+    public SetlistEntity(UUID id, String name) {
+        this.id = id;
+        this.name = name;
+        this.items = Collections.emptyList();
+    }
+
     public SetlistEntity(Setlist setlist) {
-        this.id = setlist.getId();
-        this.name = setlist.getName();
-        this.items = setlist.getItems()
-                .stream()
-                .map(item -> new SetlistItemEntity(item, this))
-                .toList();
+        this(setlist.getId(), setlist.getName());
     }
 
     public UUID getId() {
