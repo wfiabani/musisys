@@ -1,9 +1,9 @@
 package br.com.band.band.repertorio.infrastructure.web;
 
 import br.com.band.band.repertorio.application.RepertorioService;
+import br.com.band.band.repertorio.application.dto.MusicDTO;
 import br.com.band.band.repertorio.application.dto.SetlistDTO;
 import br.com.band.band.repertorio.application.dto.SetlistSummaryDTO;
-import br.com.band.band.repertorio.domain.model.Music;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +23,7 @@ public class RepertorioController {
     // ── Músicas ────────────────────────────────────────────────────────────────
 
     @GetMapping("/musics")
-    public List<Music> listMusics() {
+    public List<MusicDTO> listMusics() {
         return repertorioService.listAllMusics();
     }
 

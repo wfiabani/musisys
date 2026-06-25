@@ -1,9 +1,9 @@
 package br.com.band.band.repertorio.application;
 
+import br.com.band.band.repertorio.application.dto.MusicDTO;
 import br.com.band.band.repertorio.application.dto.SetlistDTO;
 import br.com.band.band.repertorio.application.dto.SetlistSummaryDTO;
 import br.com.band.band.repertorio.application.usecase.*;
-import br.com.band.band.repertorio.domain.model.Music;
 
 import java.util.List;
 import java.util.UUID;
@@ -48,7 +48,7 @@ public class RepertorioService {
         this.reorderSetlistUseCase = reorderSetlistUseCase;
     }
 
-    public List<Music> listAllMusics() {
+    public List<MusicDTO> listAllMusics() {
         return listAllMusicsUseCase.execute();
     }
 

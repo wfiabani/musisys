@@ -22,6 +22,91 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # JDBC: jdbc:h2:mem:band-db  |  user: sa  |  senha: (vazio)
 ```
 
+## Diretrizes para IA
+
+### Objetivo
+
+Evolua o projeto preservando sua arquitetura e convenções. Priorize consistência com o código existente em vez de introduzir novos padrões.
+Em caso de dúvida, priorize consistência com o código existente em vez de aplicar a solução considerada mais moderna.
+
+### Antes de implementar
+
+Sempre:
+
+- Leia o código existente relacionado à funcionalidade.
+- Reutilize padrões já adotados pelo projeto.
+- Preserve o estilo de código já existente.
+
+Nunca assuma que uma abstração não existe antes de pesquisar no repositório.
+
+### Preservação da arquitetura
+
+A arquitetura atual é intencional.
+
+Não:
+
+- altere fronteiras entre módulos;
+- mova regras de negócio para controllers;
+- acesse classes internas de outro módulo;
+- introduza dependências circulares;
+- substitua Clean Architecture por outro estilo.
+
+Caso uma mudança arquitetural pareça melhor, explique a proposta e aguarde aprovação.
+
+### Casos de Uso
+
+Casos de uso são classes Java comuns.
+
+Nunca utilize:
+
+- `@Service`
+- `@Component`
+- `@Repository`
+
+Eles devem continuar sendo instanciados pelas classes `*Config`.
+
+### Implementação de funcionalidades
+
+Sempre que possível siga esta sequência:
+
+1. Domínio
+2. Caso de Uso
+3. Porta
+4. Adaptador
+5. Controller
+6. Testes
+
+### Refatorações
+
+Refatore apenas quando necessário para:
+
+- corrigir bugs;
+- remover duplicação;
+- melhorar legibilidade.
+
+Evite refatorações não relacionadas à tarefa.
+Evite renomear classes, métodos ou pacotes sem necessidade funcional.
+
+### Dependências
+
+Não adicione novas bibliotecas sem solicitação explícita.
+
+### Quando pedir confirmação
+
+Solicite aprovação antes de:
+
+- alterar arquitetura;
+- remover código existente;
+- modificar APIs públicas;
+- mover classes entre módulos;
+- alterar regras de negócio;
+- adicionar novas dependências de infraestrutura;
+
+### Resultado esperado
+
+O código gerado deve parecer ter sido escrito pelo mesmo autor do restante do projeto.
+
+
 ## Visão geral
 
 **MusiSYS** é um sistema de gestão para grupos musicais construído como um monólito modular com Spring Modulith. O projeto aplica **Arquitetura Limpa (Clean Architecture)** dentro de cada módulo, com fronteiras de módulo verificadas em tempo de teste por `ModulithStructureTest`.
