@@ -5,12 +5,16 @@ import br.com.band.band.eventos.application.port.SetlistClient;
 import br.com.band.band.eventos.application.port.repository.EventRepository;
 import br.com.band.band.eventos.application.usecase.*;
 import br.com.band.band.eventos.infrastructure.client.RestSetlistClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class EventosConfig {
+
+    @Value("${app.repertorio.base-url}")
+    private String repertorioBaseUrl;
 
     @Bean
     public ListAllEventsUseCase listAllEventsUseCase(EventRepository eventRepository) {
@@ -48,8 +52,14 @@ public class EventosConfig {
     }
 
     @Bean
+    public ListAvailableSetlistsUseCase listAvailableSetlistsUseCase(SetlistClient setlistClient) {
+        return new ListAvailableSetlistsUseCase(setlistClient);
+    }
+
+    @Bean
     public EventosService eventosService(
             ListAllEventsUseCase listAllEventsUseCase,
+            ListAvailableSetlistsUseCase listAvailableSetlistsUseCase,
             GetEventWithSetlistUseCase getEventWithSetlistUseCase,
             CreateEventUseCase createEventUseCase,
             UpdateEventUseCase updateEventUseCase,
@@ -57,6 +67,7 @@ public class EventosConfig {
     ) {
         return new EventosService(
                 listAllEventsUseCase,
+                listAvailableSetlistsUseCase,
                 getEventWithSetlistUseCase,
                 createEventUseCase,
                 updateEventUseCase,
@@ -71,6 +82,6 @@ public class EventosConfig {
 
     @Bean
     public SetlistClient setlistClient(RestTemplate restTemplate) {
-        return new RestSetlistClient(restTemplate, "http://localhost:8081");
+        return new RestSetlistClient(restTemplate, repertorioBaseUrl);
     }
 }

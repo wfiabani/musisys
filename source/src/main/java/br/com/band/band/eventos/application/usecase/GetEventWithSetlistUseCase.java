@@ -1,6 +1,7 @@
 package br.com.band.band.eventos.application.usecase;
 
 import br.com.band.band.eventos.application.dto.SetlistDto;
+import br.com.band.band.eventos.application.exception.EventNotFoundException;
 import br.com.band.band.eventos.application.port.SetlistClient;
 import br.com.band.band.eventos.domain.model.Event;
 import br.com.band.band.eventos.application.port.repository.EventRepository;
@@ -23,7 +24,7 @@ public class GetEventWithSetlistUseCase {
 
     public EventWithSetlistOutput execute(UUID eventId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new EventNotFoundException(eventId));
 
         Optional<SetlistDto> setlist =
                 Optional.ofNullable(event.getSetlistId())

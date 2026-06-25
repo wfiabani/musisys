@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>MusiSYS</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50:  '#f0f4ff', 100: '#dce6ff', 200: '#b9ccff',
+                            400: '#6b87fa', 500: '#4f6ef7', 600: '#3b5bf0', 700: '#2c47d9'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        html, body { height: 100%; overflow: hidden; }
+    </style>
+</head>
+<body class="h-screen flex bg-gray-100" x-data="shell()" x-cloak>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Sidebar                                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<aside class="w-52 flex-none h-screen flex flex-col bg-gray-900 overflow-y-auto">
+
+    <!-- Brand -->
+    <div class="px-4 py-4 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2
+                             1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2
+                             1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+            </div>
+            <span class="text-white font-semibold text-sm tracking-wide">MusiSYS</span>
+        </div>
+    </div>
+
+    <!-- Navegação -->
+    <nav class="flex-1 px-2 py-4 space-y-5 text-sm">
+
+        <!-- Repertório -->
+        <div>
+            <p class="px-2 mb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                Repertório
+            </p>
+            <template x-for="item in nav.repertorio" :key="item.href">
+                <button @click="navigate(item.href)"
+                        :class="isActive(item.href)
+                            ? 'bg-brand-600 text-white'
+                            : 'text-gray-400 hover:bg-white/10 hover:text-white'"
+                        class="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg
+                               transition-colors text-left">
+                    <span x-html="item.icon" class="shrink-0 opacity-90"></span>
+                    <span x-text="item.label"></span>
+                </button>
+            </template>
+        </div>
+
+        <!-- Eventos -->
+        <div>
+            <p class="px-2 mb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                Eventos
+            </p>
+            <template x-for="item in nav.eventos" :key="item.href">
+                <button @click="navigate(item.href)"
+                        :class="isActive(item.href)
+                            ? 'bg-brand-600 text-white'
+                            : 'text-gray-400 hover:bg-white/10 hover:text-white'"
+                        class="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg
+                               transition-colors text-left">
+                    <span x-html="item.icon" class="shrink-0 opacity-90"></span>
+                    <span x-text="item.label"></span>
+                </button>
+            </template>
+        </div>
+
+        <!-- Placeholders futuros -->
+        <div class="pt-2 border-t border-white/10">
+            <p class="px-2 mb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                Em breve
+            </p>
+            <template x-for="item in nav.futuro" :key="item.label">
+                <div class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg
+                            text-gray-600 cursor-not-allowed select-none">
+                    <span x-html="item.icon" class="shrink-0 opacity-50"></span>
+                    <span x-text="item.label" class="opacity-50"></span>
+                </div>
+            </template>
+        </div>
+    </nav>
+
+    <!-- Rodapé da sidebar -->
+    <div class="px-4 py-3 border-t border-white/10 text-[10px] text-gray-600">
+        MusiSYS · Spring Modulith
+    </div>
+</aside>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Conteúdo (iframe)                                                     -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="flex-1 h-screen overflow-hidden">
+    <iframe id="frame"
+            :src="currentUrl"
+            @load="onFrameLoad()"
+            class="w-full h-full border-0 bg-gray-50"
+            title="Conteúdo">
+    </iframe>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<script>
+const ICONS = {
+    music: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2
+                   3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895
+                   3 2zM9 10l12-3"/>
+            </svg>`,
+    list: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
+                  M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2
+                  m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+           </svg>`,
+    cal: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0
+                 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>`,
+    dollar: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3
+                    2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1
+                    c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+             </svg>`,
+    agenda: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0
+                    00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+             </svg>`,
+}
+
+const DEFAULT_URL = '/eventos/ui'
+const STORAGE_KEY = 'musisys_last_url'
+
+function shell() {
+    return {
+        currentUrl: DEFAULT_URL,
+
+        nav: {
+            repertorio: [
+                { href: '/repertorio/ui/musics',   label: 'Músicas',   icon: ICONS.music },
+                { href: '/repertorio/ui/setlists', label: 'Setlists',  icon: ICONS.list  },
+            ],
+            eventos: [
+                { href: '/eventos/ui', label: 'Eventos', icon: ICONS.cal },
+            ],
+            futuro: [
+                { label: 'Agenda',     icon: ICONS.agenda  },
+                { label: 'Financeiro', icon: ICONS.dollar  },
+            ],
+        },
+
+        /* Navega para uma URL — atualiza iframe + URL do browser */
+        navigate(url) {
+            this.currentUrl = url
+            history.pushState({ url }, '', url)
+            sessionStorage.setItem(STORAGE_KEY, url)
+        },
+
+        /* Destaca o item de nav cujo prefixo bate com a URL atual */
+        isActive(href) {
+            return this.currentUrl === href || this.currentUrl.startsWith(href + '/')
+        },
+
+        /* Quando o iframe termina de carregar, sincroniza a URL do browser */
+        onFrameLoad() {
+            try {
+                const frame = document.getElementById('frame')
+                const path  = frame.contentWindow.location.pathname
+                if (path && path !== this.currentUrl) {
+                    this.currentUrl = path
+                    history.replaceState({ url: path }, '', path)
+                    sessionStorage.setItem(STORAGE_KEY, path)
+                }
+            } catch (_) {
+                /* cross-origin guard — nunca acontece aqui (same-origin) */
+            }
+        },
+
+        init() {
+            /* Ao abrir o shell diretamente em /, retoma a última página ou o default */
+            const fromPath    = location.pathname !== '/' ? location.pathname + location.search : null
+            const fromStorage = sessionStorage.getItem(STORAGE_KEY)
+            this.currentUrl   = fromPath || fromStorage || DEFAULT_URL
+
+            /* Botões voltar/avançar do browser */
+            window.addEventListener('popstate', e => {
+                this.currentUrl = e.state?.url || DEFAULT_URL
+            })
+        }
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 package br.com.band.band.eventos.application;
 
 import br.com.band.band.eventos.application.dto.EventDTO;
+import br.com.band.band.eventos.application.dto.SetlistSummaryDto;
 import br.com.band.band.eventos.application.usecase.*;
 import br.com.band.band.eventos.domain.model.EventType;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 public class EventosService {
 
     private final ListAllEventsUseCase listAllEventsUseCase;
+    private final ListAvailableSetlistsUseCase listAvailableSetlistsUseCase;
     private final GetEventWithSetlistUseCase getEventWithSetlistUseCase;
     private final CreateEventUseCase createEventUseCase;
     private final UpdateEventUseCase updateEventUseCase;
@@ -18,12 +20,14 @@ public class EventosService {
 
     public EventosService(
             ListAllEventsUseCase listAllEventsUseCase,
+            ListAvailableSetlistsUseCase listAvailableSetlistsUseCase,
             GetEventWithSetlistUseCase getEventWithSetlistUseCase,
             CreateEventUseCase createEventUseCase,
             UpdateEventUseCase updateEventUseCase,
             DeleteEventUseCase deleteEventUseCase
     ) {
         this.listAllEventsUseCase = listAllEventsUseCase;
+        this.listAvailableSetlistsUseCase = listAvailableSetlistsUseCase;
         this.getEventWithSetlistUseCase = getEventWithSetlistUseCase;
         this.createEventUseCase = createEventUseCase;
         this.updateEventUseCase = updateEventUseCase;
@@ -32,6 +36,10 @@ public class EventosService {
 
     public List<EventDTO> listAllEvents() {
         return listAllEventsUseCase.execute();
+    }
+
+    public List<SetlistSummaryDto> listAvailableSetlists() {
+        return listAvailableSetlistsUseCase.execute();
     }
 
     public EventWithSetlistOutput getById(UUID id) {

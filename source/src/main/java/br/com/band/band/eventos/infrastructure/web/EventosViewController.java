@@ -23,6 +23,7 @@ public class EventosViewController {
     public String eventsPage(Model model) {
         model.addAttribute("pageTitle", "Eventos");
         model.addAttribute("events", eventosService.listAllEvents());
+        model.addAttribute("setlists", eventosService.listAvailableSetlists());
         return "eventos/events";
     }
 
@@ -31,6 +32,7 @@ public class EventosViewController {
         var event = eventosService.getById(id);
         model.addAttribute("pageTitle", event.location());
         model.addAttribute("event", event);
+        model.addAttribute("setlists", eventosService.listAvailableSetlists());
         return "eventos/event-detail";
     }
 }

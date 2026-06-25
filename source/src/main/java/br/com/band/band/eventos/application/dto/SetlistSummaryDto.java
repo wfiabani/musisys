@@ -2,4 +2,4 @@ package br.com.band.band.eventos.application.dto;
 
 import java.util.UUID;
 
-public record SetlistDto(UUID id, String name) {}
+public record SetlistSummaryDto(UUID id, String name) {}
