@@ -98,3 +98,32 @@ INSERT INTO events (id, type, date_time, location, notes, setlist_id) VALUES
 ('eeeeeeee-0000-0000-0000-000000000009', 'SHOW',     '2025-05-01T20:00:00', 'Centro de Eventos',       'Show comemorativo',           'aaaaaaaa-0000-0000-0000-000000000005'),
 
 ('eeeeeeee-0000-0000-0000-000000000010', 'REHEARSAL','2025-04-05T20:00:00', 'Estúdio Central',         'Ensaio especial para festival',NULL);
+
+INSERT INTO financial_transactions (id, type, description, amount, due_date, payment_date, status, category, notes) VALUES
+-- Abril 2026 (liquidados)
+('cccccccc-0000-0000-0000-000000000001','INCOME', 'Cachê Show Teatro Municipal',     3500.00,'2026-04-15','2026-04-16','PAID',      'Cachê',       NULL),
+('cccccccc-0000-0000-0000-000000000002','INCOME', 'Cachê Rock Bar Soho',             1200.00,'2026-04-22','2026-04-23','PAID',      'Cachê',       'Show particular — aniversário'),
+('cccccccc-0000-0000-0000-000000000003','EXPENSE','Aluguel Estúdio Central — Abr',    450.00,'2026-04-05','2026-04-05','PAID',      'Estúdio',     NULL),
+('cccccccc-0000-0000-0000-000000000004','EXPENSE','Manutenção guitarra',              180.00,'2026-04-12','2026-04-14','PAID',      'Equipamento', 'Troca de captador'),
+-- Maio 2026 (liquidados)
+('cccccccc-0000-0000-0000-000000000005','INCOME', 'Cachê Festival Rock Sul',         5000.00,'2026-05-10','2026-05-11','PAID',      'Cachê',       'Palco principal'),
+('cccccccc-0000-0000-0000-000000000006','EXPENSE','Aluguel Estúdio Central — Mai',    450.00,'2026-05-03','2026-05-03','PAID',      'Estúdio',     NULL),
+('cccccccc-0000-0000-0000-000000000007','EXPENSE','Transporte — Festival',            320.00,'2026-05-10','2026-05-10','PAID',      'Outros',      'Van + combustível ida e volta'),
+('cccccccc-0000-0000-0000-000000000008','EXPENSE','Impressão fôlderes e cartazes',    280.00,'2026-05-20','2026-05-22','PAID',      'Marketing',   NULL),
+-- Junho 2026 (mistura: pago, pendente, vencido)
+('cccccccc-0000-0000-0000-000000000009','INCOME', 'Cachê Centro Cultural',           2800.00,'2026-06-05','2026-06-06','PAID',      'Cachê',       NULL),
+('cccccccc-0000-0000-0000-000000000010','INCOME', 'Patrocínio Cerveja Brand',        1500.00,'2026-06-10','2026-06-12','PAID',      'Patrocínio',  'Logo no banner e camiseta'),
+('cccccccc-0000-0000-0000-000000000011','EXPENSE','Aluguel Estúdio Central — Jun',    450.00,'2026-06-07','2026-06-07','PAID',      'Estúdio',     NULL),
+('cccccccc-0000-0000-0000-000000000012','EXPENSE','Cordas e peles (reposição)',        95.00,'2026-06-15','2026-06-15','PAID',      'Equipamento', NULL),
+('cccccccc-0000-0000-0000-000000000013','INCOME', 'Cachê Festa Junina — Associação', 2200.00,'2026-06-20', NULL,       'PENDING',   'Cachê',       'Aguardando confirmação bancária'),
+('cccccccc-0000-0000-0000-000000000014','EXPENSE','Renovação site e redes sociais',   350.00,'2026-06-18', NULL,       'PENDING',   'Marketing',   'Serviço de design contratado'),
+('cccccccc-0000-0000-0000-000000000015','INCOME', 'Cachê Show 28/06',                3000.00,'2026-06-28', NULL,       'PENDING',   'Cachê',       'Show corporativo'),
+('cccccccc-0000-0000-0000-000000000016','EXPENSE','Locação PA e iluminação 28/06',    800.00,'2026-06-28', NULL,       'PENDING',   'Equipamento', NULL),
+-- Julho 2026 (futuro)
+('cccccccc-0000-0000-0000-000000000017','INCOME', 'Cachê Rock Nacional — Jul',       4000.00,'2026-07-12', NULL,       'PENDING',   'Cachê',       NULL),
+('cccccccc-0000-0000-0000-000000000018','EXPENSE','Aluguel Estúdio Central — Jul',    450.00,'2026-07-05', NULL,       'PENDING',   'Estúdio',     NULL),
+('cccccccc-0000-0000-0000-000000000019','EXPENSE','Revisão bateria',                  250.00,'2026-07-20', NULL,       'PENDING',   'Equipamento', NULL),
+-- Agosto 2026 (futuro)
+('cccccccc-0000-0000-0000-000000000020','INCOME', 'Cachê Show Aniversário da Cidade',3500.00,'2026-08-15', NULL,       'PENDING',   'Cachê',       NULL),
+('cccccccc-0000-0000-0000-000000000021','EXPENSE','Aluguel Estúdio Central — Ago',    450.00,'2026-08-02', NULL,       'PENDING',   'Estúdio',     NULL),
+('cccccccc-0000-0000-0000-000000000022','INCOME', 'Patrocínio Festival de Inverno',  2000.00,'2026-08-22', NULL,       'PENDING',   'Patrocínio',  'Contrato assinado');

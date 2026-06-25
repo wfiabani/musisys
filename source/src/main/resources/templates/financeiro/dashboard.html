@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{financeiro/_layout :: head}"></head>
+<body class="bg-gray-50 antialiased" x-data="financeiroDashboard()">
+
+<div th:replace="~{financeiro/_layout :: toastWidget}"></div>
+
+<script th:inline="javascript">
+    window.__year         = /*[[${currentYear}]]*/  2026;
+    window.__month        = /*[[${currentMonth}]]*/ 6;
+    window.__summary      = /*[[${summary}]]*/      {};
+    window.__transactions = /*[[${transactions}]]*/ [];
+    window.__projections  = /*[[${projections}]]*/  [];
+</script>
+
+<main class="max-w-6xl mx-auto px-4 py-8 space-y-6">
+
+    <!-- ── Cabeçalho + navegação de mês ───────────────────────────────── -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Financeiro</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Contas a pagar e receber</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- nav mês -->
+            <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-1">
+                <button @click="prevMonth()" :disabled="loading"
+                        class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100
+                               disabled:opacity-40 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <span class="px-3 text-sm font-semibold text-gray-800 min-w-[9rem] text-center"
+                      x-text="monthLabel"></span>
+                <button @click="nextMonth()" :disabled="loading"
+                        class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100
+                               disabled:opacity-40 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- nova transação -->
+            <button @click="openCreate()"
+                    class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700
+                           text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-sm
+                           transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Novo Lançamento
+            </button>
+        </div>
+    </div>
+
+    <!-- ── KPI Cards ──────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+
+        <!-- Receitas -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-4">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Receitas</p>
+            <p class="text-lg font-bold text-emerald-600"
+               x-text="fmtMoney(summary.totalIncome)"></p>
+            <p class="text-xs text-gray-400 mt-0.5"
+               x-text="`R$ ${fmtMoney(summary.paidIncome)} recebido`"></p>
+        </div>
+
+        <!-- Despesas -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-4">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Despesas</p>
+            <p class="text-lg font-bold text-red-600"
+               x-text="fmtMoney(summary.totalExpenses)"></p>
+            <p class="text-xs text-gray-400 mt-0.5"
+               x-text="`R$ ${fmtMoney(summary.paidExpenses)} pago`"></p>
+        </div>
+
+        <!-- Saldo projetado -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-4">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Saldo Projetado</p>
+            <p class="text-lg font-bold"
+               :class="Number(summary.projectedBalance) >= 0 ? 'text-emerald-600' : 'text-red-600'"
+               x-text="fmtMoney(summary.projectedBalance)"></p>
+            <p class="text-xs text-gray-400 mt-0.5">receitas − despesas</p>
+        </div>
+
+        <!-- Saldo confirmado -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-4">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Confirmado</p>
+            <p class="text-lg font-bold"
+               :class="Number(summary.confirmedBalance) >= 0 ? 'text-emerald-600' : 'text-red-600'"
+               x-text="fmtMoney(summary.confirmedBalance)"></p>
+            <p class="text-xs text-gray-400 mt-0.5">somente pagos</p>
+        </div>
+
+        <!-- A vencer -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-4">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">A Vencer</p>
+            <p class="text-lg font-bold text-amber-600"
+               x-text="summary.pendingCount - summary.overdueCount"></p>
+            <p class="text-xs text-gray-400 mt-0.5">lançamentos pendentes</p>
+        </div>
+
+        <!-- Vencidos -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-4"
+             :class="summary.overdueCount > 0 ? 'border-red-200 bg-red-50' : ''">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Vencidos</p>
+            <p class="text-lg font-bold"
+               :class="summary.overdueCount > 0 ? 'text-red-600' : 'text-gray-400'"
+               x-text="summary.overdueCount"></p>
+            <p class="text-xs text-gray-400 mt-0.5">prazo expirado</p>
+        </div>
+    </div>
+
+    <!-- ── Projeção 6 meses ────────────────────────────────────────────── -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-semibold text-gray-800">Projeção — próximos 6 meses</h2>
+            <p class="text-xs text-gray-400 mt-0.5">Todos os lançamentos por vencimento (excluindo cancelados)</p>
+        </div>
+
+        <div class="grid grid-cols-6 divide-x divide-gray-100">
+            <template x-for="p in projections" :key="p.monthLabel">
+                <div class="px-3 py-4 flex flex-col gap-2">
+                    <p class="text-xs font-semibold text-gray-500 text-center" x-text="p.monthLabel"></p>
+
+                    <!-- barra receita -->
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] text-emerald-600 font-medium">Rec.</span>
+                            <span class="text-[10px] text-gray-500" x-text="fmtMoney(p.income)"></span>
+                        </div>
+                        <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div class="h-full rounded-full bg-emerald-400 transition-all duration-500"
+                                 :style="`width: ${barPct(p.income)}%`"></div>
+                        </div>
+                    </div>
+
+                    <!-- barra despesa -->
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] text-red-500 font-medium">Desp.</span>
+                            <span class="text-[10px] text-gray-500" x-text="fmtMoney(p.expenses)"></span>
+                        </div>
+                        <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div class="h-full rounded-full bg-red-400 transition-all duration-500"
+                                 :style="`width: ${barPct(p.expenses)}%`"></div>
+                        </div>
+                    </div>
+
+                    <!-- saldo -->
+                    <div class="mt-1 text-center">
+                        <span class="text-xs font-bold"
+                              :class="Number(p.balance) >= 0 ? 'text-emerald-600' : 'text-red-600'"
+                              x-text="(Number(p.balance) >= 0 ? '+' : '') + fmtMoney(p.balance)">
+                        </span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- ── Lista de lançamentos ────────────────────────────────────────── -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+        <!-- barra de filtros -->
+        <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-2 flex-wrap">
+            <h2 class="text-sm font-semibold text-gray-800 mr-2">Lançamentos</h2>
+
+            <!-- tipo -->
+            <template x-for="[val, label] in [['','Todos'],['INCOME','Receitas'],['EXPENSE','Despesas']]" :key="val">
+                <button @click="typeFilter = val"
+                        :class="typeFilter === val
+                            ? 'bg-gray-800 text-white border-gray-800'
+                            : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200'"
+                        class="px-3 py-1 rounded-full text-xs font-medium border transition-colors"
+                        x-text="label">
+                </button>
+            </template>
+
+            <div class="w-px h-4 bg-gray-200 mx-1"></div>
+
+            <!-- status -->
+            <template x-for="[val, label] in [['','Todos'],['PENDING','Pendentes'],['PAID','Pagos']]" :key="val">
+                <button @click="statusFilter = val"
+                        :class="statusFilter === val
+                            ? 'bg-gray-800 text-white border-gray-800'
+                            : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200'"
+                        class="px-3 py-1 rounded-full text-xs font-medium border transition-colors"
+                        x-text="label">
+                </button>
+            </template>
+
+            <div class="ml-auto text-xs text-gray-400"
+                 x-text="`${filteredTransactions.length} de ${transactions.length} lançamento${transactions.length !== 1 ? 's' : ''}`">
+            </div>
+        </div>
+
+        <!-- estado vazio -->
+        <div x-show="filteredTransactions.length === 0"
+             class="flex flex-col items-center justify-center py-16 gap-3 text-gray-400">
+            <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0
+                         2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1
+                         M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-sm">Nenhum lançamento encontrado.</p>
+            <button @click="openCreate()" class="text-sm text-brand-600 hover:underline font-medium">
+                Criar o primeiro lançamento
+            </button>
+        </div>
+
+        <!-- tabela -->
+        <table x-show="filteredTransactions.length > 0" class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <th class="pl-5 pr-3 py-3 text-left w-24">Tipo</th>
+                    <th class="px-3 py-3 text-left w-28">Vencimento</th>
+                    <th class="px-3 py-3 text-left">Descrição</th>
+                    <th class="px-3 py-3 text-left hidden md:table-cell w-32">Categoria</th>
+                    <th class="px-3 py-3 text-right w-32">Valor</th>
+                    <th class="px-3 py-3 text-left w-28">Status</th>
+                    <th class="px-4 py-3 text-right w-28">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="t in filteredTransactions" :key="t.id">
+                    <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50/70
+                               transition-colors group border-l-[3px]"
+                        :class="t.type === 'INCOME' ? 'border-l-emerald-400' : 'border-l-red-400'">
+
+                        <!-- Tipo -->
+                        <td class="pl-5 pr-3 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border"
+                                  :class="t.type === 'INCOME'
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-red-50 text-red-700 border-red-200'"
+                                  x-text="t.type === 'INCOME' ? 'Receita' : 'Despesa'">
+                            </span>
+                        </td>
+
+                        <!-- Vencimento -->
+                        <td class="px-3 py-3 tabular-nums whitespace-nowrap">
+                            <span :class="isOverdue(t) ? 'text-red-600 font-medium' : 'text-gray-700'"
+                                  x-text="fmtDate(t.dueDate)"></span>
+                        </td>
+
+                        <!-- Descrição -->
+                        <td class="px-3 py-3">
+                            <p class="font-medium text-gray-900 truncate max-w-xs" x-text="t.description"></p>
+                            <p x-show="t.notes" class="text-xs text-gray-400 truncate max-w-xs" x-text="t.notes"></p>
+                        </td>
+
+                        <!-- Categoria -->
+                        <td class="px-3 py-3 hidden md:table-cell">
+                            <span x-show="t.category"
+                                  class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600"
+                                  x-text="t.category"></span>
+                            <span x-show="!t.category" class="text-gray-300 text-xs">—</span>
+                        </td>
+
+                        <!-- Valor -->
+                        <td class="px-3 py-3 text-right tabular-nums font-semibold whitespace-nowrap"
+                            :class="t.type === 'INCOME' ? 'text-emerald-700' : 'text-red-700'"
+                            x-text="fmtMoney(t.amount)">
+                        </td>
+
+                        <!-- Status -->
+                        <td class="px-3 py-3">
+                            <template x-if="t.status === 'PAID'">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs
+                                             font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Pago
+                                </span>
+                            </template>
+                            <template x-if="t.status === 'PENDING' && !isOverdue(t)">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs
+                                             font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                    Pendente
+                                </span>
+                            </template>
+                            <template x-if="t.status === 'PENDING' && isOverdue(t)">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs
+                                             font-semibold bg-red-50 text-red-700 border border-red-200">
+                                    Vencido
+                                </span>
+                            </template>
+                            <template x-if="t.status === 'CANCELLED'">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs
+                                             font-semibold bg-gray-100 text-gray-500 border border-gray-200">
+                                    Cancelado
+                                </span>
+                            </template>
+                        </td>
+
+                        <!-- Ações -->
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-0.5
+                                        opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                <!-- Pagar (só para pendentes) -->
+                                <button x-show="t.status === 'PENDING'"
+                                        @click="pay(t)"
+                                        title="Marcar como pago"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-emerald-600
+                                               hover:bg-emerald-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Editar -->
+                                <button @click="openEdit(t)"
+                                        title="Editar"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-brand-600
+                                               hover:bg-brand-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                                                 m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Excluir -->
+                                <button @click="openDelete(t)"
+                                        title="Excluir"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-red-600
+                                               hover:bg-red-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+                                                 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0
+                                                 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Modal — Criar / Editar                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div x-cloak x-show="modal.open"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-40 flex items-center justify-center p-4"
+     @keydown.escape.window="closeModal()">
+
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal()"></div>
+
+    <div x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+         class="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-md">
+
+        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900"
+                    x-text="modal.mode === 'create' ? 'Novo Lançamento' : 'Editar Lançamento'"></h2>
+                <p class="text-xs text-gray-400 mt-0.5"
+                   x-text="modal.mode === 'create' ? 'Preencha os dados do lançamento' : 'Atualize as informações'"></p>
+            </div>
+            <button @click="closeModal()"
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form @submit.prevent="save()" class="px-6 py-5 space-y-4" novalidate>
+
+            <!-- Tipo + Data vencimento -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Tipo <span class="text-red-500">*</span>
+                    </label>
+                    <select x-model="form.type" @change="errors.type = ''"
+                            :class="errors.type ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-brand-500'"
+                            class="w-full px-3 py-2.5 text-sm border rounded-lg shadow-sm bg-white
+                                   focus:outline-none focus:ring-2 focus:border-transparent
+                                   transition appearance-none cursor-pointer">
+                        <option value="INCOME">Receita</option>
+                        <option value="EXPENSE">Despesa</option>
+                    </select>
+                    <p x-show="errors.type" x-text="errors.type" class="mt-1 text-xs text-red-500"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Vencimento <span class="text-red-500">*</span>
+                    </label>
+                    <input x-model="form.dueDate" @change="errors.dueDate = ''" type="date"
+                           :class="errors.dueDate ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-brand-500'"
+                           class="w-full px-3 py-2.5 text-sm border rounded-lg shadow-sm
+                                  focus:outline-none focus:ring-2 focus:border-transparent transition"/>
+                    <p x-show="errors.dueDate" x-text="errors.dueDate" class="mt-1 text-xs text-red-500"></p>
+                </div>
+            </div>
+
+            <!-- Descrição -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Descrição <span class="text-red-500">*</span>
+                </label>
+                <input x-model.trim="form.description" @input="errors.description = ''"
+                       x-ref="descInput" type="text"
+                       placeholder="Ex: Cachê Show Teatro Municipal"
+                       :class="errors.description ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-brand-500'"
+                       class="w-full px-3.5 py-2.5 text-sm border rounded-lg shadow-sm
+                              focus:outline-none focus:ring-2 focus:border-transparent
+                              placeholder-gray-300 transition"/>
+                <p x-show="errors.description" x-text="errors.description" class="mt-1 text-xs text-red-500"></p>
+            </div>
+
+            <!-- Valor + Categoria -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Valor (R$) <span class="text-red-500">*</span>
+                    </label>
+                    <input x-model="form.amount" @input="errors.amount = ''" type="number"
+                           min="0.01" step="0.01" placeholder="0,00"
+                           :class="errors.amount ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-brand-500'"
+                           class="w-full px-3.5 py-2.5 text-sm border rounded-lg shadow-sm
+                                  focus:outline-none focus:ring-2 focus:border-transparent
+                                  placeholder-gray-300 transition"/>
+                    <p x-show="errors.amount" x-text="errors.amount" class="mt-1 text-xs text-red-500"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Categoria <span class="text-xs text-gray-400 font-normal">(opcional)</span>
+                    </label>
+                    <input x-model.trim="form.category" type="text" list="categoryOptions"
+                           placeholder="Ex: Cachê, Estúdio…"
+                           class="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-lg shadow-sm
+                                  focus:outline-none focus:ring-2 focus:ring-brand-500
+                                  focus:border-transparent placeholder-gray-300 transition"/>
+                    <datalist id="categoryOptions">
+                        <option value="Cachê"></option>
+                        <option value="Estúdio"></option>
+                        <option value="Equipamento"></option>
+                        <option value="Marketing"></option>
+                        <option value="Material"></option>
+                        <option value="Patrocínio"></option>
+                        <option value="Outros"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            <!-- Notas -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Notas <span class="text-xs text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <textarea x-model="form.notes" rows="2"
+                          placeholder="Observações adicionais…"
+                          class="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-lg
+                                 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500
+                                 focus:border-transparent placeholder-gray-300
+                                 transition resize-none"></textarea>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex gap-3 pt-1">
+                <button type="button" @click="closeModal()"
+                        class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700
+                               bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" :disabled="saving"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5
+                               text-sm font-medium text-white bg-brand-600 hover:bg-brand-700
+                               disabled:opacity-60 disabled:cursor-not-allowed rounded-lg
+                               transition-colors focus:outline-none focus:ring-2
+                               focus:ring-brand-500 focus:ring-offset-2">
+                    <svg x-show="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <span x-text="saving ? 'Salvando…' : (modal.mode === 'create' ? 'Criar' : 'Salvar')"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Dialog — Confirmar exclusão                                          -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div x-cloak x-show="deleteDialog.open"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-40 flex items-center justify-center p-4"
+     @keydown.escape.window="closeDelete()">
+
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeDelete()"></div>
+
+    <div x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         class="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+
+        <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-50">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+                         01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0
+                         00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+        </div>
+        <h3 class="text-center text-base font-semibold text-gray-900 mb-1">Excluir lançamento</h3>
+        <p class="text-center text-sm text-gray-500 mb-1">Tem certeza que deseja excluir</p>
+        <p class="text-center font-semibold text-gray-800 mb-5"
+           x-text="`&quot;${deleteDialog.transaction?.description}&quot;`"></p>
+        <p class="text-center text-xs text-gray-400 mb-5">Esta ação não pode ser desfeita.</p>
+
+        <div class="flex gap-3">
+            <button @click="closeDelete()"
+                    class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700
+                           bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                Cancelar
+            </button>
+            <button @click="executeDelete()" :disabled="deleting"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5
+                           text-sm font-medium text-white bg-red-600 hover:bg-red-700
+                           disabled:opacity-60 disabled:cursor-not-allowed rounded-lg transition-colors">
+                <svg x-show="deleting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span x-text="deleting ? 'Excluindo…' : 'Sim, excluir'"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<th:block th:replace="~{financeiro/_layout :: scripts}"></th:block>
+<script>
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                   'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
+const TODAY_ISO = new Date().toISOString().split('T')[0]
+
+function financeiroDashboard() {
+    return {
+        /* ── Estado ───────────────────────────────────────────────── */
+        currentYear:  window.__year,
+        currentMonth: window.__month,
+        summary:      window.__summary      || {},
+        transactions: window.__transactions || [],
+        projections:  window.__projections  || [],
+        loading:  false,
+        saving:   false,
+        deleting: false,
+
+        typeFilter:   '',
+        statusFilter: '',
+
+        modal:        { open: false, mode: 'create', id: null },
+        form:         { type: 'INCOME', description: '', amount: '', dueDate: '', category: '', notes: '' },
+        errors:       { type: '', description: '', amount: '', dueDate: '' },
+        deleteDialog: { open: false, transaction: null },
+
+        /* ── Computed ─────────────────────────────────────────────── */
+        get monthLabel() {
+            return `${MONTHS_PT[this.currentMonth - 1]} ${this.currentYear}`
+        },
+
+        get filteredTransactions() {
+            return this.transactions
+                .filter(t => !this.typeFilter   || t.type   === this.typeFilter)
+                .filter(t => !this.statusFilter || t.status === this.statusFilter)
+        },
+
+        get maxProjection() {
+            if (!this.projections.length) return 1
+            return Math.max(...this.projections.flatMap(p => [Number(p.income), Number(p.expenses)]), 1)
+        },
+
+        barPct(value) {
+            return Math.round((Number(value) / this.maxProjection) * 100)
+        },
+
+        isOverdue(t) {
+            return t.status === 'PENDING' && t.dueDate < TODAY_ISO
+        },
+
+        /* ── Navegação de mês ─────────────────────────────────────── */
+        async prevMonth() {
+            let m = this.currentMonth - 1, y = this.currentYear
+            if (m < 1) { m = 12; y-- }
+            await this.loadMonth(y, m)
+        },
+
+        async nextMonth() {
+            let m = this.currentMonth + 1, y = this.currentYear
+            if (m > 12) { m = 1; y++ }
+            await this.loadMonth(y, m)
+        },
+
+        async loadMonth(year, month) {
+            this.loading = true
+            try {
+                const [sumRes, txRes] = await Promise.all([
+                    fetch(`/financeiro/summary?year=${year}&month=${month}`),
+                    fetch(`/financeiro/transactions?year=${year}&month=${month}`)
+                ])
+                if (!sumRes.ok || !txRes.ok) throw new Error('Erro ao carregar dados.')
+                this.summary      = await sumRes.json()
+                this.transactions = await txRes.json()
+                this.currentYear  = year
+                this.currentMonth = month
+                this.typeFilter   = ''
+                this.statusFilter = ''
+            } catch (e) {
+                this.$store.toast.error(e.message || 'Erro ao carregar o mês.')
+            } finally {
+                this.loading = false
+            }
+        },
+
+        /* ── Modal criar / editar ─────────────────────────────────── */
+        openCreate() {
+            const today = TODAY_ISO
+            this.form   = { type: 'INCOME', description: '', amount: '', dueDate: today, category: '', notes: '' }
+            this.errors = { type: '', description: '', amount: '', dueDate: '' }
+            this.modal  = { open: true, mode: 'create', id: null }
+            this.$nextTick(() => this.$refs.descInput?.focus())
+        },
+
+        openEdit(t) {
+            this.form   = {
+                type: t.type, description: t.description,
+                amount: t.amount, dueDate: t.dueDate,
+                category: t.category || '', notes: t.notes || ''
+            }
+            this.errors = { type: '', description: '', amount: '', dueDate: '' }
+            this.modal  = { open: true, mode: 'edit', id: t.id }
+            this.$nextTick(() => this.$refs.descInput?.focus())
+        },
+
+        closeModal() { this.modal.open = false; this.saving = false },
+
+        validate() {
+            this.errors = { type: '', description: '', amount: '', dueDate: '' }
+            let ok = true
+            if (!this.form.type)                        { this.errors.type        = 'Selecione o tipo.';      ok = false }
+            if (!this.form.description.trim())          { this.errors.description = 'Informe a descrição.';   ok = false }
+            if (!this.form.amount || Number(this.form.amount) <= 0) { this.errors.amount = 'Informe o valor.'; ok = false }
+            if (!this.form.dueDate)                     { this.errors.dueDate     = 'Informe o vencimento.';  ok = false }
+            return ok
+        },
+
+        async save() {
+            if (!this.validate()) return
+            this.saving = true
+            try {
+                const payload = {
+                    type:        this.form.type,
+                    description: this.form.description.trim(),
+                    amount:      Number(this.form.amount),
+                    dueDate:     this.form.dueDate,
+                    category:    this.form.category.trim() || null,
+                    notes:       this.form.notes.trim()    || null
+                }
+
+                if (this.modal.mode === 'create') {
+                    const res = await fetch('/financeiro/transactions', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    if (!res.ok) throw new Error(await readError(res))
+                    const id = await res.json()
+                    this.transactions.push({ id, ...payload, status: 'PENDING', paymentDate: null })
+                    this.$store.toast.success('Lançamento criado!')
+                } else {
+                    const res = await fetch(`/financeiro/transactions/${this.modal.id}`, {
+                        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    if (!res.ok) throw new Error(await readError(res))
+                    const idx = this.transactions.findIndex(t => t.id === this.modal.id)
+                    if (idx >= 0) this.transactions[idx] = { ...this.transactions[idx], ...payload }
+                    this.$store.toast.success('Lançamento atualizado!')
+                }
+                await this.reloadSummary()
+                this.closeModal()
+            } catch (e) {
+                this.$store.toast.error(e.message || 'Erro ao salvar.')
+            } finally {
+                this.saving = false
+            }
+        },
+
+        /* ── Marcar como pago ─────────────────────────────────────── */
+        async pay(t) {
+            try {
+                const res = await fetch(`/financeiro/transactions/${t.id}/pay`, { method: 'PATCH' })
+                if (!res.ok) throw new Error(await readError(res))
+                const idx = this.transactions.findIndex(x => x.id === t.id)
+                if (idx >= 0) this.transactions[idx] = { ...this.transactions[idx], status: 'PAID', paymentDate: TODAY_ISO }
+                await this.reloadSummary()
+                this.$store.toast.success(`"${t.description}" marcado como pago!`)
+            } catch (e) {
+                this.$store.toast.error(e.message || 'Erro ao marcar como pago.')
+            }
+        },
+
+        async reloadSummary() {
+            const res = await fetch(`/financeiro/summary?year=${this.currentYear}&month=${this.currentMonth}`)
+            if (res.ok) this.summary = await res.json()
+        },
+
+        /* ── Excluir ──────────────────────────────────────────────── */
+        openDelete(t)  { this.deleteDialog = { open: true, transaction: t } },
+        closeDelete()  { this.deleteDialog.open = false; this.deleting = false },
+
+        async executeDelete() {
+            this.deleting = true
+            try {
+                const t   = this.deleteDialog.transaction
+                const res = await fetch(`/financeiro/transactions/${t.id}`, { method: 'DELETE' })
+                if (!res.ok) throw new Error(await readError(res))
+                this.transactions = this.transactions.filter(x => x.id !== t.id)
+                await this.reloadSummary()
+                this.$store.toast.success(`"${t.description}" excluído.`)
+                this.closeDelete()
+            } catch (e) {
+                this.$store.toast.error(e.message || 'Erro ao excluir.')
+                this.closeDelete()
+            } finally {
+                this.deleting = false
+            }
+        }
+    }
+}
+</script>
+
+</body>
+</html>
