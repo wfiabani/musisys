@@ -34,7 +34,7 @@ Dentro de alguns Bounded Contexts, foram identificados **subdomínios internos**
 - Pagamentos  
 - Cobranças  
 
-Além disso, foi identificada a necessidade de um **Infra-Context denominado Agenda**, responsável por fornecer uma visão transversal de compromissos oriundos de múltiplos Bounded Contexts, sem centralizar ou assumir regras de negócio pertencentes a esses contextos.
+Além disso, foi identificada a necessidade de um **Infra-Context** denominado **Agenda**, responsável por fornecer uma visão transversal de compromissos oriundos de múltiplos Bounded Contexts, sem centralizar ou assumir regras de negócio pertencentes a esses contextos.
 
 ---
 

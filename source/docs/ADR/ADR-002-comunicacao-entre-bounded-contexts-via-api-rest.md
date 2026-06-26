@@ -5,7 +5,7 @@ O sistema é um monólito modularizado, estruturado em Bounded Contexts (DDD).
 Alguns módulos precisam consumir dados de outros Bounded Contexts.
 
 ## Decisão
-A comunicação entre Bounded Contexts será feita **exclusivamente via API REST**, mesmo no contexto do monólito.
+A comunicação entre Bounded Contexts será feita **exclusivamente** via **API REST** e **eventos**, mesmo no contexto do monólito.
 
 O acesso direto a código, entidades ou repositórios de outro BC não será permitido.
 

@@ -120,10 +120,12 @@ Stack: Java 21 · Spring Boot 3.3.4 · Spring Modulith 1.1.3 · H2 in-memory · 
 | Módulo | Pacote raiz | Responsabilidade | Estado |
 |---|---|---|---|
 | `repertorio` | `br.com.band.band.repertorio` | CRUD de Músicas e Setlists | Completo (API + UI) |
-| `eventos` | `br.com.band.band.eventos` | Eventos do grupo (shows, ensaios, reuniões) | API parcial, listener incompleto |
-| `agenda` | `br.com.band.band.agenda` | Visão consolidada de eventos + financeiro | Mock/esboço |
-| `financeiro` | `br.com.band.band.financeiro` | Dados financeiros | Placeholder vazio |
+| `eventos` | `br.com.band.band.eventos` | Eventos do grupo (shows, ensaios, reuniões) | Completo (API + UI) |
+| `agenda` | `br.com.band.band.agenda` | Visão consolidada de eventos + financeiro | Infra-Context funcional |
+| `financeiro` | `br.com.band.band.financeiro` | Dados financeiros | Completo (API + UI) |
 | `shared` | `br.com.band.band.shared` | Kernel compartilhado — tipos públicos entre módulos | Apenas `SetlistRemovedEvent` |
+
+> **BCs planejados (ADR-000, não implementados ainda):** `comercial` e `marketing`.
 
 ### Regra de ouro dos módulos
 
@@ -131,17 +133,17 @@ Nenhum módulo pode importar classes internas de outro módulo. A única exceç�
 
 ### Comunicação entre módulos
 
-Dois padrões coexistem no projeto:
+Dois padrões coexistem intencionalmente, com funções distintas:
 
-**1. Eventos de domínio (assíncrono in-process)** — padrão preferido para reações a mudanças de estado:
+**1. Eventos de domínio (assíncrono in-process)** — para notificações de mudança de estado:
 - `repertorio` publica `SetlistRemovedEvent` via `DomainEventPublisher` (porta de saída) → adaptado por `SpringDomainEventPublisher` → Spring `ApplicationEventPublisher`
 - `eventos` consome via `@EventListener` em `SetlistRemovedEventListener`
 
-**2. HTTP via RestClient** — usado por `agenda` para consumir `eventos`:
-- `EventosClient` chama `GET http://localhost:8081/eventos` (URL hardcoded)
-- Este padrão foi adotado antes da refatoração para eventos de domínio e representa uma inconsistência a ser resolvida
+**2. HTTP via RestClient/RestTemplate** — para consultas entre módulos (ADR-002):
+- `eventos` consulta `repertorio` via `SetlistClient` → `RestSetlistClient` (usa `RestTemplate`; URL configurável via `app.repertorio.base-url`)
+- `agenda` consulta `eventos` e `financeiro` via `EventosClient` e `FinanceiroClient` (usam `RestClient`; URL ainda hardcoded como `http://localhost:8081` — pendente externalização)
 
-> **Atenção:** O `SetlistClient` (porta em `eventos/application/port/`) é um vestígio da abordagem HTTP inicial e não está mais conectado a nada. Pode ser removido.
+> **Nota ADR:** ADR-002 autoriza ambos os mecanismos. REST cobre consultas; eventos de domínio cobrem notificações reativas.
 
 ---
 
@@ -243,7 +245,7 @@ Tabelas: `musics`, `setlists`, `setlist_items`, `events`.
 | Música não pode ser excluída se pertence a algum setlist | `DeleteMusicUseCase` verifica `MusicRepository.existsInAnySetlist()` → lança `MusicInUseException` (409) |
 | Remoção de setlist publica evento de domínio | `RemoveSetlistUseCase` → `DomainEventPublisher.publish(SetlistRemovedEvent)` |
 | Posições do setlist são sempre normalizadas (1-indexed) | `Setlist.normalizePositions()` chamado após qualquer mutação |
-| Eventos que referenciam um setlist removido devem ter a referência limpa | `SetlistRemovedEventListener` — **atualmente apenas imprime no stdout; implementação real pendente** |
+| Eventos que referenciam um setlist removido devem ter a referência limpa | `SetlistRemovedEventListener` → `UpdateEventsAfterSetlistRemovalUseCase.execute(setlistId)` |
 
 ---
 
@@ -251,14 +253,16 @@ Tabelas: `musics`, `setlists`, `setlist_items`, `events`.
 
 | Área | Status |
 |---|---|
-| `repertorio` — API REST | ✅ Completo (10 endpoints) |
+| `repertorio` — API REST | ✅ Completo |
 | `repertorio` — UI Thymeleaf | ✅ Completo (3 páginas) |
-| `eventos` — API REST | ✅ Parcialmente implementado |
-| `eventos` — UI Thymeleaf | ❌ `events.html` e `event-detail.html` não criados |
-| `eventos` — `SetlistRemovedEventListener` | ⚠️ Placeholder (só `System.out.println`) |
-| `SetlistClient` em `eventos` | ⚠️ Vestígio sem uso — candidato a remoção |
-| `agenda` — `EventosClient` URL hardcoded | ⚠️ `http://localhost:8081` hardcoded; deveria ser configurável |
-| `financeiro` | ❌ Apenas controller vazio |
+| `eventos` — API REST | ✅ Completo |
+| `eventos` — UI Thymeleaf | ✅ Completo (`events.html`, `event-detail.html`) |
+| `eventos` — `SetlistRemovedEventListener` | ✅ Implementado e conectado ao use case |
+| `financeiro` — API REST | ✅ Completo |
+| `financeiro` — UI Thymeleaf | ✅ Completo (`dashboard.html`) |
+| `agenda` — URL hardcoded em `EventosClient`/`FinanceiroClient` | ⚠️ `http://localhost:8081` hardcoded; pendente externalização via `@Value` |
+| `RestTemplate` vs `RestClient` em clientes HTTP | ⚠️ `RestSetlistClient` usa `RestTemplate`; clientes de `agenda` usam `RestClient` — sem justificativa documentada |
+| BCs `comercial` e `marketing` (ADR-000) | ❌ Não implementados |
 | Persistência real (banco externo) | ❌ Apenas H2 in-memory |
 
 ---
