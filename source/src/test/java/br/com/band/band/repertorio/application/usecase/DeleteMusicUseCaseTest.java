@@ -72,6 +72,6 @@ class DeleteMusicUseCaseTest {
     }
 
     private Music musicaDeTeste(UUID id) {
-        return new Music(id, "Title", "C", "Author");
+        return new Music(id, "Title", "C", "Author", null);
     }
 }

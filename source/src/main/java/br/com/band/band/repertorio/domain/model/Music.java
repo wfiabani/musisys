@@ -8,12 +8,14 @@ public class Music {
     private String title;
     private String key;
     private String author;
+    private String description;
 
-    public Music(UUID id, String title, String key, String author) {
+    public Music(UUID id, String title, String key, String author, String description) {
         this.id = id;
         this.title = title;
         this.key = key;
         this.author = author;
+        this.description = description;
     }
 
     public UUID getId() {
@@ -30,5 +32,9 @@ public class Music {
 
     public String getAuthor() {
         return author;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

@@ -13,8 +13,8 @@ public class CreateMusicUseCase {
         this.repository = repository;
     }
 
-    public UUID execute(String title, String author, String key) {
-        Music music = new Music(UUID.randomUUID(), title, key, author);
+    public UUID execute(String title, String author, String key, String description) {
+        Music music = new Music(UUID.randomUUID(), title, key, author, description);
         repository.save(music);
         return music.getId();
     }

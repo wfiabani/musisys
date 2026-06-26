@@ -14,8 +14,8 @@ public class UpdateMusicUseCase {
         this.repository = repository;
     }
 
-    public void execute(UUID id, String title, String author, String key) {
+    public void execute(UUID id, String title, String author, String key, String description) {
         repository.findById(id).orElseThrow(() -> new MusicNotFoundException(id));
-        repository.save(new Music(id, title, key, author));
+        repository.save(new Music(id, title, key, author, description));
     }
 }

@@ -30,13 +30,13 @@ public class RepertorioController {
     @PostMapping("/musics")
     @ResponseStatus(HttpStatus.CREATED)
     public UUID createMusic(@RequestBody CreateMusicRequest request) {
-        return repertorioService.createMusic(request.title(), request.author(), request.key());
+        return repertorioService.createMusic(request.title(), request.author(), request.key(), request.description());
     }
 
     @PutMapping("/musics/{musicId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateMusic(@PathVariable UUID musicId, @RequestBody UpdateMusicRequest request) {
-        repertorioService.updateMusic(musicId, request.title(), request.author(), request.key());
+        repertorioService.updateMusic(musicId, request.title(), request.author(), request.key(), request.description());
     }
 
     @DeleteMapping("/musics/{musicId}")
@@ -95,9 +95,9 @@ public class RepertorioController {
 
     // ── Request records ────────────────────────────────────────────────────────
 
-    record CreateMusicRequest(String title, String author, String key) {}
+    record CreateMusicRequest(String title, String author, String key, String description) {}
 
-    record UpdateMusicRequest(String title, String author, String key) {}
+    record UpdateMusicRequest(String title, String author, String key, String description) {}
 
     record CreateSetlistRequest(String name) {}
 

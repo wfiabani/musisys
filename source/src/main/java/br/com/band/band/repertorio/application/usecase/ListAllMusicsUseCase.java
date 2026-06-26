@@ -15,7 +15,7 @@ public class ListAllMusicsUseCase {
 
     public List<MusicDTO> execute() {
         return musicRepository.findAll().stream()
-                .map(m -> new MusicDTO(m.getId(), m.getTitle(), m.getKey(), m.getAuthor()))
+                .map(m -> new MusicDTO(m.getId(), m.getTitle(), m.getKey(), m.getAuthor(), m.getDescription()))
                 .toList();
     }
 }

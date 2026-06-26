@@ -26,7 +26,8 @@ public class JpaMusicRepository implements MusicRepository {
                                 entity.getId(),
                                 entity.getTitle(),
                                 entity.getMusicalKey(),
-                                entity.getAuthor()
+                                entity.getAuthor(),
+                                entity.getDescription()
                         )
                 )
                 .toList();
@@ -47,7 +48,7 @@ public class JpaMusicRepository implements MusicRepository {
 
     @Override
     public void save(Music music) {
-        repository.save(new MusicEntity(music.getId(), music.getTitle(), music.getKey(), music.getAuthor()));
+        repository.save(new MusicEntity(music.getId(), music.getTitle(), music.getKey(), music.getAuthor(), music.getDescription()));
     }
 
     @Override
@@ -65,7 +66,8 @@ public class JpaMusicRepository implements MusicRepository {
                 entity.getId(),
                 entity.getTitle(),
                 entity.getMusicalKey(),
-                entity.getAuthor()
+                entity.getAuthor(),
+                entity.getDescription()
         );
     }
 

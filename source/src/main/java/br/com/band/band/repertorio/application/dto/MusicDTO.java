@@ -6,6 +6,7 @@ public record MusicDTO(
         UUID id,
         String title,
         String key,
-        String author
+        String author,
+        String description
 ) {
 }

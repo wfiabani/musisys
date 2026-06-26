@@ -52,12 +52,12 @@ public class RepertorioService {
         return listAllMusicsUseCase.execute();
     }
 
-    public UUID createMusic(String title, String author, String key) {
-        return createMusicUseCase.execute(title, author, key);
+    public UUID createMusic(String title, String author, String key, String description) {
+        return createMusicUseCase.execute(title, author, key, description);
     }
 
-    public void updateMusic(UUID id, String title, String author, String key) {
-        updateMusicUseCase.execute(id, title, author, key);
+    public void updateMusic(UUID id, String title, String author, String key, String description) {
+        updateMusicUseCase.execute(id, title, author, key, description);
     }
 
     public void deleteMusic(UUID musicId) {
