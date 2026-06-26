@@ -67,6 +67,12 @@ public class FinanceiroController {
         service.markAsPaid(id, paymentDate);
     }
 
+    @PatchMapping("/transactions/{id}/unpay")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unmarkAsPaid(@PathVariable UUID id) {
+        service.unmarkAsPaid(id);
+    }
+
     @DeleteMapping("/transactions/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {

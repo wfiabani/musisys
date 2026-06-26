@@ -316,6 +316,18 @@
                                     </svg>
                                 </button>
 
+                                <!-- Desfazer pagamento (só para pagas) -->
+                                <button x-show="t.status === 'PAID'"
+                                        @click="unpay(t)"
+                                        title="Desfazer pagamento"
+                                        class="p-1.5 rounded-md text-gray-400 hover:text-amber-600
+                                               hover:bg-amber-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 14l-4-4 4-4m-4 4h11a4 4 0 010 8h-1"/>
+                                    </svg>
+                                </button>
+
                                 <!-- Editar -->
                                 <button @click="openEdit(t)"
                                         title="Editar"
@@ -721,6 +733,20 @@ function financeiroDashboard() {
                 this.$store.toast.success(`"${t.description}" marcado como pago!`)
             } catch (e) {
                 this.$store.toast.error(e.message || 'Erro ao marcar como pago.')
+            }
+        },
+
+        /* ── Desfazer pagamento ───────────────────────────────────── */
+        async unpay(t) {
+            try {
+                const res = await fetch(`/financeiro/transactions/${t.id}/unpay`, { method: 'PATCH' })
+                if (!res.ok) throw new Error(await readError(res))
+                const idx = this.transactions.findIndex(x => x.id === t.id)
+                if (idx >= 0) this.transactions[idx] = { ...this.transactions[idx], status: 'PENDING', paymentDate: null }
+                await this.reloadSummary()
+                this.$store.toast.success(`"${t.description}" revertido para pendente.`)
+            } catch (e) {
+                this.$store.toast.error(e.message || 'Erro ao desfazer pagamento.')
             }
         },
 

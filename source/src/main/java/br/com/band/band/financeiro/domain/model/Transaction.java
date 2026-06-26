@@ -54,6 +54,11 @@ public class Transaction {
         this.paymentDate = paymentDate;
     }
 
+    public void unmarkAsPaid() {
+        this.status      = TransactionStatus.PENDING;
+        this.paymentDate = null;
+    }
+
     public boolean isOverdue() {
         return status == TransactionStatus.PENDING && dueDate.isBefore(LocalDate.now());
     }

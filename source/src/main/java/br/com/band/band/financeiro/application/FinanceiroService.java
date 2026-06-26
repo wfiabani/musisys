@@ -17,6 +17,7 @@ public class FinanceiroService {
     private final UpdateTransactionUseCase updateTransaction;
     private final DeleteTransactionUseCase deleteTransaction;
     private final MarkAsPaidUseCase markAsPaid;
+    private final UnmarkAsPaidUseCase unmarkAsPaid;
     private final ListByMonthUseCase listByMonth;
     private final GetMonthlySummaryUseCase getMonthlySummary;
     private final GetMonthlyProjectionsUseCase getMonthlyProjections;
@@ -26,6 +27,7 @@ public class FinanceiroService {
             UpdateTransactionUseCase updateTransaction,
             DeleteTransactionUseCase deleteTransaction,
             MarkAsPaidUseCase markAsPaid,
+            UnmarkAsPaidUseCase unmarkAsPaid,
             ListByMonthUseCase listByMonth,
             GetMonthlySummaryUseCase getMonthlySummary,
             GetMonthlyProjectionsUseCase getMonthlyProjections
@@ -34,6 +36,7 @@ public class FinanceiroService {
         this.updateTransaction    = updateTransaction;
         this.deleteTransaction    = deleteTransaction;
         this.markAsPaid           = markAsPaid;
+        this.unmarkAsPaid         = unmarkAsPaid;
         this.listByMonth          = listByMonth;
         this.getMonthlySummary    = getMonthlySummary;
         this.getMonthlyProjections= getMonthlyProjections;
@@ -55,6 +58,10 @@ public class FinanceiroService {
 
     public void markAsPaid(UUID id, LocalDate paymentDate) {
         markAsPaid.execute(id, paymentDate);
+    }
+
+    public void unmarkAsPaid(UUID id) {
+        unmarkAsPaid.execute(id);
     }
 
     public List<TransactionDTO> listByMonth(int year, int month) {

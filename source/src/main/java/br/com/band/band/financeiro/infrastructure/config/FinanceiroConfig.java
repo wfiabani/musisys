@@ -30,6 +30,11 @@ public class FinanceiroConfig {
     }
 
     @Bean
+    public UnmarkAsPaidUseCase unmarkAsPaidUseCase(TransactionRepository repo) {
+        return new UnmarkAsPaidUseCase(repo);
+    }
+
+    @Bean
     public ListByMonthUseCase listByMonthUseCase(TransactionRepository repo) {
         return new ListByMonthUseCase(repo);
     }
@@ -50,13 +55,14 @@ public class FinanceiroConfig {
             UpdateTransactionUseCase updateTransaction,
             DeleteTransactionUseCase deleteTransaction,
             MarkAsPaidUseCase markAsPaid,
+            UnmarkAsPaidUseCase unmarkAsPaid,
             ListByMonthUseCase listByMonth,
             GetMonthlySummaryUseCase getMonthlySummary,
             GetMonthlyProjectionsUseCase getMonthlyProjections
     ) {
         return new FinanceiroService(
                 createTransaction, updateTransaction, deleteTransaction,
-                markAsPaid, listByMonth, getMonthlySummary, getMonthlyProjections
+                markAsPaid, unmarkAsPaid, listByMonth, getMonthlySummary, getMonthlyProjections
         );
     }
 }
