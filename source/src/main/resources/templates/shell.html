@@ -106,19 +106,24 @@
             </template>
         </div>
 
-        <!-- Placeholders futuros -->
-        <div class="pt-2 border-t border-white/10">
+        <!-- Agenda -->
+        <div>
             <p class="px-2 mb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-                Em breve
+                Agenda
             </p>
-            <template x-for="item in nav.futuro" :key="item.label">
-                <div class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg
-                            text-gray-600 cursor-not-allowed select-none">
-                    <span x-html="item.icon" class="shrink-0 opacity-50"></span>
-                    <span x-text="item.label" class="opacity-50"></span>
-                </div>
+            <template x-for="item in nav.agenda" :key="item.href">
+                <button @click="navigate(item.href)"
+                        :class="isActive(item.href)
+                            ? 'bg-brand-600 text-white'
+                            : 'text-gray-400 hover:bg-white/10 hover:text-white'"
+                        class="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg
+                               transition-colors text-left">
+                    <span x-html="item.icon" class="shrink-0 opacity-90"></span>
+                    <span x-text="item.label"></span>
+                </button>
             </template>
         </div>
+
     </nav>
 
     <!-- Rodapé da sidebar -->
@@ -190,9 +195,10 @@ function shell() {
             financeiro: [
                 { href: '/financeiro/ui', label: 'Financeiro', icon: ICONS.dollar },
             ],
-            futuro: [
-                { label: 'Agenda', icon: ICONS.agenda },
+            agenda: [
+                { href: '/agenda/ui', label: 'Agenda', icon: ICONS.agenda },
             ],
+            futuro: [],
         },
 
         /* Navega para uma URL — atualiza iframe + URL do browser */

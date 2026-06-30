@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{agenda/_layout :: head}"></head>
+<body class="bg-gray-50 antialiased" x-data="agendaView()" x-cloak>
+
+<div th:replace="~{agenda/_layout :: toastWidget}"></div>
+
+<script th:inline="javascript">
+    window.__items     = /*[[${items}]]*/     [];
+    window.__startDate = /*[[${startDate}]]*/ '';
+    window.__endDate   = /*[[${endDate}]]*/   '';
+</script>
+
+<main class="max-w-3xl mx-auto px-4 py-8">
+
+    <!-- ── Cabeçalho ────────────────────────────────────────────────── -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Agenda</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Eventos e contas pendentes no período</p>
+    </div>
+
+    <!-- ── Filtro de período ─────────────────────────────────────────── -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 mb-8
+                flex flex-col sm:flex-row items-end gap-3">
+        <div class="flex items-end gap-2 flex-1 w-full">
+            <div class="flex-1">
+                <label class="block text-xs font-medium text-gray-500 mb-1">De</label>
+                <input x-model="startDate" type="date"
+                       class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                              focus:outline-none focus:ring-2 focus:ring-brand-500
+                              focus:border-transparent transition"/>
+            </div>
+            <div class="flex-1">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Até</label>
+                <input x-model="endDate" type="date" :min="startDate"
+                       class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                              focus:outline-none focus:ring-2 focus:ring-brand-500
+                              focus:border-transparent transition"/>
+            </div>
+        </div>
+        <button @click="applyFilter()" :disabled="loading"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2
+                       bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium
+                       px-4 py-2 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed
+                       transition-colors focus:outline-none focus:ring-2
+                       focus:ring-brand-500 focus:ring-offset-2">
+            <svg x-show="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10"
+                        stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <span x-text="loading ? 'Carregando…' : 'Aplicar'"></span>
+        </button>
+    </div>
+
+    <!-- ── Estado vazio ──────────────────────────────────────────────── -->
+    <div x-show="!loading && groupedByDay.length === 0"
+         class="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+        <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0
+                     002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0
+                     002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <p class="text-sm">Nenhum compromisso no período selecionado.</p>
+    </div>
+
+    <!-- ── Timeline ──────────────────────────────────────────────────── -->
+    <div x-show="groupedByDay.length > 0" class="space-y-8">
+        <template x-for="group in groupedByDay" :key="group.date">
+            <div>
+
+                <!-- Cabeçalho do dia -->
+                <div class="flex items-baseline gap-2 mb-3 pb-2 border-b border-gray-200">
+                    <h2 class="text-base font-bold text-gray-900" x-text="group.label"></h2>
+                    <span class="text-xs text-gray-400" x-text="fmtDate(group.date)"></span>
+                    <span class="ml-auto text-xs text-gray-400"
+                          x-text="`${group.items.length} item${group.items.length !== 1 ? 's' : ''}`">
+                    </span>
+                </div>
+
+                <!-- Itens do dia -->
+                <div class="space-y-2">
+                    <template x-for="item in group.items" :key="item.id">
+                        <div>
+
+                            <!-- Card de Evento -->
+                            <div x-show="item.type === 'EVENT'"
+                                 class="bg-white rounded-xl border border-gray-200 shadow-sm
+                                        border-l-4 overflow-hidden"
+                                 :class="eventBorderClass(item.eventType)">
+                                <div class="flex items-start gap-3 px-4 py-3">
+                                    <div class="mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center
+                                                justify-center"
+                                         :class="eventIconBg(item.eventType)">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                             :class="eventIconColor(item.eventType)">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0
+                                                     00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="mb-1">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full
+                                                         text-xs font-semibold border"
+                                                  :class="eventBadgeClass(item.eventType)"
+                                                  x-text="eventTypeLabel(item.eventType)">
+                                            </span>
+                                        </div>
+                                        <p class="text-sm font-semibold text-gray-900 truncate"
+                                           x-text="item.title"></p>
+                                        <p class="text-xs text-gray-500 mt-0.5"
+                                           x-text="fmtDateTime(item.dateTime)"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Financeiro -->
+                            <div x-show="item.type === 'FINANCIAL'"
+                                 class="bg-white rounded-xl border border-gray-200 shadow-sm
+                                        border-l-4 overflow-hidden"
+                                 :class="item.transactionType === 'INCOME'
+                                     ? 'border-l-emerald-400' : 'border-l-red-400'">
+                                <div class="flex items-start gap-3 px-4 py-3">
+                                    <div class="mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center
+                                                justify-center"
+                                         :class="item.transactionType === 'INCOME'
+                                             ? 'bg-emerald-50' : 'bg-red-50'">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                             :class="item.transactionType === 'INCOME'
+                                                 ? 'text-emerald-600' : 'text-red-600'">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343
+                                                     2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1
+                                                     m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-2 mb-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full
+                                                             text-xs font-semibold border"
+                                                      :class="item.transactionType === 'INCOME'
+                                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                          : 'bg-red-50 text-red-700 border-red-200'"
+                                                      x-text="item.transactionType === 'INCOME'
+                                                          ? 'Receita' : 'Despesa'">
+                                                </span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full
+                                                             text-xs font-semibold border"
+                                                      :class="financialStatusClass(item)"
+                                                      x-text="financialStatusLabel(item)">
+                                                </span>
+                                            </div>
+                                            <span class="text-sm font-bold tabular-nums shrink-0 whitespace-nowrap"
+                                                  :class="item.transactionType === 'INCOME'
+                                                      ? 'text-emerald-700' : 'text-red-700'"
+                                                  x-text="fmtMoney(item.amount)">
+                                            </span>
+                                        </div>
+                                        <p class="text-sm font-semibold text-gray-900 truncate"
+                                           x-text="item.title"></p>
+                                        <p class="text-xs text-gray-500 mt-0.5">
+                                            Vence em
+                                            <span x-text="fmtDate(item.dateTime.substring(0, 10))"></span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+
+</main>
+
+<th:block th:replace="~{agenda/_layout :: scripts}"></th:block>
+<script>
+/* Normaliza LocalDateTime que pode vir como array [y,mo,d,h,mi,s] ou string ISO */
+function normalizeDt(dt) {
+    if (!dt) return ''
+    if (Array.isArray(dt)) {
+        const [y, mo, d, h = 0, mi = 0, s = 0] = dt
+        const pad = n => String(n).padStart(2, '0')
+        return `${y}-${pad(mo)}-${pad(d)}T${pad(h)}:${pad(mi)}:${pad(s)}`
+    }
+    return String(dt)
+}
+
+const TODAY_ISO = new Date().toISOString().split('T')[0]
+
+function agendaView() {
+    return {
+        items:     (window.__items || []).map(i => ({ ...i, dateTime: normalizeDt(i.dateTime) })),
+        startDate: window.__startDate || '',
+        endDate:   window.__endDate   || '',
+        loading:   false,
+
+        get groupedByDay() {
+            const days = {}
+            this.items.forEach(item => {
+                const date = item.dateTime.substring(0, 10)
+                if (!days[date]) days[date] = []
+                days[date].push(item)
+            })
+            return Object.entries(days)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, items]) => ({ date, label: this.dayLabel(date), items }))
+        },
+
+        dayLabel(isoDate) {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const d    = new Date(isoDate + 'T12:00:00')
+            const diff = Math.round((d - today) / 86400000)
+            if (diff === 0) return 'Hoje'
+            if (diff === 1) return 'Amanhã'
+            const name = d.toLocaleDateString('pt-BR', { weekday: 'long' })
+            return name.charAt(0).toUpperCase() + name.slice(1)
+        },
+
+        async applyFilter() {
+            if (!this.startDate || !this.endDate) return
+            if (this.startDate > this.endDate) {
+                this.$store.toast.error('A data inicial deve ser anterior à data final.')
+                return
+            }
+            this.loading = true
+            try {
+                const res = await fetch(`/agenda?start=${this.startDate}&end=${this.endDate}`)
+                if (!res.ok) throw new Error(await readError(res))
+                const raw  = await res.json()
+                this.items = raw.map(i => ({ ...i, dateTime: normalizeDt(i.dateTime) }))
+            } catch (e) {
+                this.$store.toast.error(e.message || 'Erro ao carregar a agenda.')
+            } finally {
+                this.loading = false
+            }
+        },
+
+        eventTypeLabel(type) {
+            return ({ SHOW: 'Show', REHEARSAL: 'Ensaio', MEETING: 'Reunião', OTHER: 'Outro' })[type] || type
+        },
+        eventBadgeClass(type) {
+            return ({
+                SHOW:      'bg-emerald-100 text-emerald-700 border-emerald-200',
+                REHEARSAL: 'bg-blue-100 text-blue-700 border-blue-200',
+                MEETING:   'bg-purple-100 text-purple-700 border-purple-200',
+                OTHER:     'bg-gray-100 text-gray-600 border-gray-200'
+            })[type] || 'bg-gray-100 text-gray-600 border-gray-200'
+        },
+        eventBorderClass(type) {
+            return ({
+                SHOW:      'border-l-emerald-400',
+                REHEARSAL: 'border-l-blue-400',
+                MEETING:   'border-l-purple-400',
+                OTHER:     'border-l-gray-300'
+            })[type] || 'border-l-gray-300'
+        },
+        eventIconBg(type) {
+            return ({ SHOW: 'bg-emerald-50', REHEARSAL: 'bg-blue-50',
+                      MEETING: 'bg-purple-50', OTHER: 'bg-gray-100' })[type] || 'bg-gray-100'
+        },
+        eventIconColor(type) {
+            return ({ SHOW: 'text-emerald-600', REHEARSAL: 'text-blue-600',
+                      MEETING: 'text-purple-600', OTHER: 'text-gray-500' })[type] || 'text-gray-500'
+        },
+
+        isOverdue(item) {
+            return item.status === 'PENDING' && item.dateTime.substring(0, 10) < TODAY_ISO
+        },
+        financialStatusClass(item) {
+            if (item.status === 'PAID')      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            if (item.status === 'CANCELLED') return 'bg-gray-100 text-gray-500 border-gray-200'
+            return this.isOverdue(item)
+                ? 'bg-red-50 text-red-700 border-red-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+        },
+        financialStatusLabel(item) {
+            if (item.status === 'PAID')      return 'Pago'
+            if (item.status === 'CANCELLED') return 'Cancelado'
+            return this.isOverdue(item) ? 'Vencido' : 'Pendente'
+        }
+    }
+}
+</script>
+</body>
+</html>

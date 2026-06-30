@@ -1,7 +1,7 @@
 package br.com.band.band.agenda.infrastructure.web;
 
-import br.com.band.band.agenda.application.AgendaService;
-import br.com.band.band.agenda.domain.model.AgendaItem;
+import br.com.band.band.agenda.application.dto.AgendaItemDTO;
+import br.com.band.band.agenda.application.usecase.GetAgendaRangeUseCase;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -11,14 +11,16 @@ import java.util.List;
 @RequestMapping("/agenda")
 public class AgendaController {
 
-    private final AgendaService agendaService;
+    private final GetAgendaRangeUseCase getAgendaRangeUseCase;
 
-    public AgendaController(AgendaService agendaService) {
-        this.agendaService = agendaService;
+    public AgendaController(GetAgendaRangeUseCase getAgendaRangeUseCase) {
+        this.getAgendaRangeUseCase = getAgendaRangeUseCase;
     }
 
     @GetMapping
-    public List<AgendaItem> getByDate(@RequestParam LocalDate date) {
-        return agendaService.getAgendaByDate(date);
+    public List<AgendaItemDTO> getByRange(
+            @RequestParam LocalDate start,
+            @RequestParam LocalDate end) {
+        return getAgendaRangeUseCase.execute(start, end);
     }
 }

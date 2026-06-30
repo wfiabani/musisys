@@ -1,5 +1,6 @@
 package br.com.band.band.agenda.infrastructure.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -9,5 +10,6 @@ public record FinanceAccountResponse(
         String type,
         String category,
         String status,
-        LocalDate dueDate
+        LocalDate dueDate,
+        BigDecimal amount
 ) {}
