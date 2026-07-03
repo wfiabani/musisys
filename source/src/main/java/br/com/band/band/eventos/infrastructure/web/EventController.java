@@ -43,7 +43,8 @@ public class EventController {
                 LocalDateTime.parse(request.dateTime(), DT_FORMATTER),
                 request.location(),
                 request.notes(),
-                request.setlistId()
+                request.setlistId(),
+                request.professionalIds()
         );
     }
 
@@ -56,7 +57,8 @@ public class EventController {
                 LocalDateTime.parse(request.dateTime(), DT_FORMATTER),
                 request.location(),
                 request.notes(),
-                request.setlistId()
+                request.setlistId(),
+                request.professionalIds()
         );
     }
 
@@ -66,5 +68,12 @@ public class EventController {
         eventosService.deleteEvent(id);
     }
 
-    record EventRequest(String type, String dateTime, String location, String notes, UUID setlistId) {}
+    record EventRequest(
+            String type,
+            String dateTime,
+            String location,
+            String notes,
+            UUID setlistId,
+            List<UUID> professionalIds
+    ) {}
 }

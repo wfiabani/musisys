@@ -5,6 +5,7 @@ import br.com.band.band.eventos.domain.model.Event;
 import br.com.band.band.eventos.domain.model.EventType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record EventWithSetlistOutput(
@@ -13,7 +14,8 @@ public record EventWithSetlistOutput(
         LocalDateTime dateTime,
         String location,
         String notes,
-        SetlistDto setlist
+        SetlistDto setlist,
+        List<UUID> professionalIds
 ) {
 
     public static EventWithSetlistOutput from(Event event, SetlistDto setlist) {
@@ -23,7 +25,8 @@ public record EventWithSetlistOutput(
                 event.getDateTime(),
                 event.getLocation(),
                 event.getNotes(),
-                setlist
+                setlist,
+                event.getProfessionalIds()
         );
     }
 }

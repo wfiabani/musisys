@@ -24,6 +24,7 @@ public class EventosViewController {
         model.addAttribute("pageTitle", "Eventos");
         model.addAttribute("events", eventosService.listAllEvents());
         model.addAttribute("setlists", eventosService.listAvailableSetlists());
+        model.addAttribute("professionals", eventosService.listAvailableProfessionals());
         return "eventos/events";
     }
 
@@ -33,6 +34,7 @@ public class EventosViewController {
         model.addAttribute("pageTitle", event.location());
         model.addAttribute("event", event);
         model.addAttribute("setlists", eventosService.listAvailableSetlists());
+        model.addAttribute("professionals", eventosService.listAvailableProfessionals());
         return "eventos/event-detail";
     }
 }

@@ -1,9 +1,11 @@
 package br.com.band.band.eventos.infrastructure.config;
 
 import br.com.band.band.eventos.application.EventosService;
+import br.com.band.band.eventos.application.port.ProfissionalClient;
 import br.com.band.band.eventos.application.port.SetlistClient;
 import br.com.band.band.eventos.application.port.repository.EventRepository;
 import br.com.band.band.eventos.application.usecase.*;
+import br.com.band.band.eventos.infrastructure.client.RestProfissionalClient;
 import br.com.band.band.eventos.infrastructure.client.RestSetlistClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +17,9 @@ public class EventosConfig {
 
     @Value("${app.repertorio.base-url}")
     private String repertorioBaseUrl;
+
+    @Value("${app.profissionais.base-url}")
+    private String profissionaisBaseUrl;
 
     @Bean
     public ListAllEventsUseCase listAllEventsUseCase(EventRepository eventRepository) {
@@ -52,14 +57,27 @@ public class EventosConfig {
     }
 
     @Bean
+    public RemoveProfessionalFromEventsUseCase removeProfessionalFromEventsUseCase(
+            EventRepository eventRepository
+    ) {
+        return new RemoveProfessionalFromEventsUseCase(eventRepository);
+    }
+
+    @Bean
     public ListAvailableSetlistsUseCase listAvailableSetlistsUseCase(SetlistClient setlistClient) {
         return new ListAvailableSetlistsUseCase(setlistClient);
+    }
+
+    @Bean
+    public ListAvailableProfissionaisUseCase listAvailableProfissionaisUseCase(ProfissionalClient profissionalClient) {
+        return new ListAvailableProfissionaisUseCase(profissionalClient);
     }
 
     @Bean
     public EventosService eventosService(
             ListAllEventsUseCase listAllEventsUseCase,
             ListAvailableSetlistsUseCase listAvailableSetlistsUseCase,
+            ListAvailableProfissionaisUseCase listAvailableProfissionaisUseCase,
             GetEventWithSetlistUseCase getEventWithSetlistUseCase,
             CreateEventUseCase createEventUseCase,
             UpdateEventUseCase updateEventUseCase,
@@ -68,6 +86,7 @@ public class EventosConfig {
         return new EventosService(
                 listAllEventsUseCase,
                 listAvailableSetlistsUseCase,
+                listAvailableProfissionaisUseCase,
                 getEventWithSetlistUseCase,
                 createEventUseCase,
                 updateEventUseCase,
@@ -83,5 +102,10 @@ public class EventosConfig {
     @Bean
     public SetlistClient setlistClient(RestTemplate restTemplate) {
         return new RestSetlistClient(restTemplate, repertorioBaseUrl);
+    }
+
+    @Bean
+    public ProfissionalClient profissionalClient(RestTemplate restTemplate) {
+        return new RestProfissionalClient(restTemplate, profissionaisBaseUrl);
     }
 }

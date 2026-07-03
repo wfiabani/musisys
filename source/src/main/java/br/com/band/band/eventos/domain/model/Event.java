@@ -1,6 +1,9 @@
 package br.com.band.band.eventos.domain.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -12,6 +15,7 @@ public class Event {
     private String location;
     private String notes;
     private UUID setlistId;
+    private final List<UUID> professionalIds = new ArrayList<>();
 
     public Event(
             UUID id,
@@ -47,6 +51,11 @@ public class Event {
         this.setlistId = Objects.requireNonNull(setlistId);
     }
 
+    public void assignProfessionals(List<UUID> professionalIds) {
+        this.professionalIds.clear();
+        this.professionalIds.addAll(professionalIds);
+    }
+
     public UUID getId() {
         return id;
     }
@@ -73,5 +82,9 @@ public class Event {
 
     public void removeSetlist() {
         this.setlistId = null;
+    }
+
+    public List<UUID> getProfessionalIds() {
+        return Collections.unmodifiableList(professionalIds);
     }
 }

@@ -16,7 +16,7 @@ public class ListAllEventsUseCase {
     public List<EventDTO> execute(){
         return eventRepository.findAll().stream()
                 .map(e -> new EventDTO(e.getId(), e.getType(), e.getDateTime(),
-                        e.getLocation(), e.getNotes(), e.getSetlistId()))
+                        e.getLocation(), e.getNotes(), e.getSetlistId(), e.getProfessionalIds()))
                 .toList();
     }
 }

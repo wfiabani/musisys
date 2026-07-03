@@ -124,6 +124,24 @@
             </template>
         </div>
 
+        <!-- Profissionais -->
+        <div>
+            <p class="px-2 mb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                Profissionais
+            </p>
+            <template x-for="item in nav.profissionais" :key="item.href">
+                <button @click="navigate(item.href)"
+                        :class="isActive(item.href)
+                            ? 'bg-brand-600 text-white'
+                            : 'text-gray-400 hover:bg-white/10 hover:text-white'"
+                        class="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg
+                               transition-colors text-left">
+                    <span x-html="item.icon" class="shrink-0 opacity-90"></span>
+                    <span x-text="item.label"></span>
+                </button>
+            </template>
+        </div>
+
     </nav>
 
     <!-- Rodapé da sidebar -->
@@ -175,6 +193,11 @@ const ICONS = {
                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0
                     00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
              </svg>`,
+    users: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8
+                   0 4 4 0 018 0zm6 3a4 4 0 10-8 0"/>
+            </svg>`,
 }
 
 const DEFAULT_URL = '/eventos/ui'
@@ -197,6 +220,9 @@ function shell() {
             ],
             agenda: [
                 { href: '/agenda/ui', label: 'Agenda', icon: ICONS.agenda },
+            ],
+            profissionais: [
+                { href: '/profissionais/ui', label: 'Profissionais', icon: ICONS.users },
             ],
             futuro: [],
         },

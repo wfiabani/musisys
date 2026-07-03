@@ -13,6 +13,8 @@ public interface EventRepository {
 
     List<Event> findBySetlistId(UUID id);
 
+    List<Event> findByProfessionalId(UUID professionalId);
+
     void saveAll(List<Event> events);
 
     void save(Event event);

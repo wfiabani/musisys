@@ -2,6 +2,7 @@ package br.com.band.band.eventos.infrastructure.persistence.mapper;
 
 import br.com.band.band.eventos.domain.model.Event;
 import br.com.band.band.eventos.infrastructure.persistence.EventEntity;
+import br.com.band.band.eventos.infrastructure.persistence.EventProfessionalEntity;
 
 public class EventMapper {
 
@@ -20,6 +21,12 @@ public class EventMapper {
         if (entity.getSetlistId() != null) {
             event.attachSetlist(entity.getSetlistId());
         }
+
+        event.assignProfessionals(
+                entity.getProfessionals().stream()
+                        .map(EventProfessionalEntity::getProfessionalId)
+                        .toList()
+        );
 
         return event;
     }

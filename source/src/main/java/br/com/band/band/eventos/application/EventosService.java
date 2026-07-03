@@ -1,6 +1,7 @@
 package br.com.band.band.eventos.application;
 
 import br.com.band.band.eventos.application.dto.EventDTO;
+import br.com.band.band.eventos.application.dto.ProfissionalSummaryDto;
 import br.com.band.band.eventos.application.dto.SetlistSummaryDto;
 import br.com.band.band.eventos.application.usecase.*;
 import br.com.band.band.eventos.domain.model.EventType;
@@ -13,6 +14,7 @@ public class EventosService {
 
     private final ListAllEventsUseCase listAllEventsUseCase;
     private final ListAvailableSetlistsUseCase listAvailableSetlistsUseCase;
+    private final ListAvailableProfissionaisUseCase listAvailableProfissionaisUseCase;
     private final GetEventWithSetlistUseCase getEventWithSetlistUseCase;
     private final CreateEventUseCase createEventUseCase;
     private final UpdateEventUseCase updateEventUseCase;
@@ -21,6 +23,7 @@ public class EventosService {
     public EventosService(
             ListAllEventsUseCase listAllEventsUseCase,
             ListAvailableSetlistsUseCase listAvailableSetlistsUseCase,
+            ListAvailableProfissionaisUseCase listAvailableProfissionaisUseCase,
             GetEventWithSetlistUseCase getEventWithSetlistUseCase,
             CreateEventUseCase createEventUseCase,
             UpdateEventUseCase updateEventUseCase,
@@ -28,6 +31,7 @@ public class EventosService {
     ) {
         this.listAllEventsUseCase = listAllEventsUseCase;
         this.listAvailableSetlistsUseCase = listAvailableSetlistsUseCase;
+        this.listAvailableProfissionaisUseCase = listAvailableProfissionaisUseCase;
         this.getEventWithSetlistUseCase = getEventWithSetlistUseCase;
         this.createEventUseCase = createEventUseCase;
         this.updateEventUseCase = updateEventUseCase;
@@ -42,16 +46,35 @@ public class EventosService {
         return listAvailableSetlistsUseCase.execute();
     }
 
+    public List<ProfissionalSummaryDto> listAvailableProfessionals() {
+        return listAvailableProfissionaisUseCase.execute();
+    }
+
     public EventWithSetlistOutput getById(UUID id) {
         return getEventWithSetlistUseCase.execute(id);
     }
 
-    public UUID createEvent(EventType type, LocalDateTime dateTime, String location, String notes, UUID setlistId) {
-        return createEventUseCase.execute(type, dateTime, location, notes, setlistId);
+    public UUID createEvent(
+            EventType type,
+            LocalDateTime dateTime,
+            String location,
+            String notes,
+            UUID setlistId,
+            List<UUID> professionalIds
+    ) {
+        return createEventUseCase.execute(type, dateTime, location, notes, setlistId, professionalIds);
     }
 
-    public void updateEvent(UUID id, EventType type, LocalDateTime dateTime, String location, String notes, UUID setlistId) {
-        updateEventUseCase.execute(id, type, dateTime, location, notes, setlistId);
+    public void updateEvent(
+            UUID id,
+            EventType type,
+            LocalDateTime dateTime,
+            String location,
+            String notes,
+            UUID setlistId,
+            List<UUID> professionalIds
+    ) {
+        updateEventUseCase.execute(id, type, dateTime, location, notes, setlistId, professionalIds);
     }
 
     public void deleteEvent(UUID id) {

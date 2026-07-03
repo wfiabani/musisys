@@ -4,6 +4,8 @@ import br.com.band.band.eventos.domain.model.EventType;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -24,6 +26,9 @@ public class EventEntity {
 
     private UUID setlistId;
 
+    @OneToMany(mappedBy = "event")
+    private List<EventProfessionalEntity> professionals;
+
     protected EventEntity() {
     }
 
@@ -41,6 +46,7 @@ public class EventEntity {
         this.location = location;
         this.notes = notes;
         this.setlistId = setlistId;
+        this.professionals = Collections.emptyList();
     }
 
     public UUID getId() {
@@ -65,5 +71,9 @@ public class EventEntity {
 
     public UUID getSetlistId() {
         return setlistId;
+    }
+
+    public List<EventProfessionalEntity> getProfessionals() {
+        return professionals;
     }
 }

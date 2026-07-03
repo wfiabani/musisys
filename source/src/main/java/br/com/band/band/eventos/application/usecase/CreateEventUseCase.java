@@ -5,6 +5,7 @@ import br.com.band.band.eventos.domain.model.Event;
 import br.com.band.band.eventos.domain.model.EventType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class CreateEventUseCase {
@@ -15,9 +16,17 @@ public class CreateEventUseCase {
         this.repository = repository;
     }
 
-    public UUID execute(EventType type, LocalDateTime dateTime, String location, String notes, UUID setlistId) {
+    public UUID execute(
+            EventType type,
+            LocalDateTime dateTime,
+            String location,
+            String notes,
+            UUID setlistId,
+            List<UUID> professionalIds
+    ) {
         Event event = new Event(UUID.randomUUID(), type, dateTime, location, notes);
         if (setlistId != null) event.attachSetlist(setlistId);
+        event.assignProfessionals(professionalIds != null ? professionalIds : List.of());
         repository.save(event);
         return event.getId();
     }
